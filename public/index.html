@@ -581,7 +581,7 @@
         <!-- Header -->
         <div class="header">
             <h1>🔐 区块链+边缘设备去中心化安全方案</h1>
-            <p>基于区块链与边缘计算的去中心化身份认证系统 | 缓存优化 | 智能家居适配 | 离线认证</p>
+            <p>全去中心化方案 | 链上唯一真相源 | 边缘内存验签 | 离线认证场景B | 无 Redis / 无数据库</p>
         </div>
 
         <!-- Stats Bar -->
@@ -597,14 +597,14 @@
                 <div class="stat-label">活跃设备</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">⚡</div>
-                <div class="stat-value" id="statCacheRate">0%</div>
-                <div class="stat-label">缓存命中率</div>
+                <div class="stat-icon">🧠</div>
+                <div class="stat-value" id="statMemoryCached">0</div>
+                <div class="stat-label">内存公钥预热</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🎫</div>
+                <div class="stat-icon">📱</div>
                 <div class="stat-value" id="statOffline">0</div>
-                <div class="stat-label">离线凭证</div>
+                <div class="stat-label">离线认证次数</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">📊</div>
@@ -647,9 +647,9 @@
                 <span class="tab-icon">📡</span>
                 状态监控
             </div>
-            <div class="tab" data-tab="cache">
-                <span class="tab-icon">⚙️</span>
-                缓存配置
+            <div class="tab" data-tab="memory">
+                <span class="tab-icon">🧠</span>
+                边缘内存
             </div>
         </div>
 
@@ -677,29 +677,24 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">缓存统计</h3>
+                    <h3 class="card-title">边缘内存统计（非持久化）</h3>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 20px;">
                     <div>
-                        <div class="form-label">总请求数</div>
-                        <div style="font-size: 24px; font-weight: 700; color: var(--primary);" id="cacheTotal">0</div>
-                    </div>
-                    <div>
-                        <div class="form-label">缓存命中</div>
-                        <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="cacheHits">0</div>
+                        <div class="form-label">公钥预热</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--primary);" id="memPubkey">0</div>
                     </div>
                     <div>
-                        <div class="form-label">缓存未命中</div>
-                        <div style="font-size: 24px; font-weight: 700; color: var(--warning);" id="cacheMisses">0</div>
+                        <div class="form-label">链上认证</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="memChainReq">0</div>
                     </div>
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span class="form-label">缓存命中率</span>
-                        <span class="badge badge-success" id="cacheRate">0%</span>
+                    <div>
+                        <div class="form-label">离线认证</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--warning);" id="memOfflineReq">0</div>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill success" id="cacheRateBar" style="width: 0%"></div>
+                    <div>
+                        <div class="form-label">已知设备</div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--accent);" id="memKnown">0</div>
                     </div>
                 </div>
             </div>
@@ -716,7 +711,7 @@
                                 <th>设备地址</th>
                                 <th>方法</th>
                                 <th>状态</th>
-                                <th>缓存</th>
+                                <th>模式</th>
                                 <th>响应时间</th>
                             </tr>
                         </thead>
@@ -743,10 +738,10 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">缓存命中率趋势</h3>
+                    <h3 class="card-title">链上 vs 离线认证趋势</h3>
                 </div>
                 <div class="chart-container">
-                    <canvas id="cacheHitRateChart"></canvas>
+                    <canvas id="authModeChart"></canvas>
                 </div>
             </div>
         </div>
@@ -777,12 +772,19 @@
                         <button type="submit" class="btn btn-primary" id="registerBtn">
                             <span>注册设备</span>
                         </button>
+                        <button type="button" class="btn btn-success" style="margin-top: 12px;" onclick="devCreateDevice()">
+                            <span>开发：自动创建并注册</span>
+                        </button>
                     </form>
+                    <div id="devCreateResult" style="margin-top: 16px; display: none;">
+                        <div class="form-label">私钥（请保存）:</div>
+                        <input type="text" class="form-input" id="devPrivateKeyOutput" readonly>
+                    </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">批量注册</h3>
+                        <h3 class="card-title">批量注册（开发模式）</h3>
                     </div>
                     <div id="batchRegisterMessage" class="message-box"></div>
                     <form id="batchRegisterForm">
@@ -823,8 +825,8 @@
                             <input type="text" class="form-input" id="authAddress" placeholder="0x..." required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">签名</label>
-                            <input type="text" class="form-input" id="authSignature" placeholder="0x00" required>
+                            <label class="form-label">设备私钥（演示用，服务端代签）</label>
+                            <input type="text" class="form-input" id="authPrivateKey" placeholder="0x...">
                         </div>
                         <button type="submit" class="btn btn-primary" id="authBtn">
                             <span>认证设备</span>
@@ -885,56 +887,69 @@
             <div class="card-grid card-grid-2">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">生成离线凭证</h3>
+                        <h3 class="card-title">步骤1：预热公钥 + 获取 Challenge</h3>
                     </div>
-                    <div id="offlineGenMessage" class="message-box"></div>
-                    <form id="offlineGenForm">
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                        联网时从链上拉取公钥写入边缘内存（重启清空）。断网后凭内存公钥完成本地验签。
+                    </p>
+                    <div id="offlineChallengeMessage" class="message-box"></div>
+                    <form id="offlineChallengeForm">
                         <div class="form-group">
                             <label class="form-label">设备地址</label>
-                            <input type="text" class="form-input" id="offlineGenAddress" placeholder="0x..." required>
+                            <input type="text" class="form-input" id="offlineChallengeAddress" placeholder="0x..." required>
                         </div>
                         <button type="submit" class="btn btn-primary">
-                            <span>生成凭证</span>
+                            <span>获取 Challenge</span>
                         </button>
                     </form>
-                    <div id="offlineGenResult" style="margin-top: 20px; display: none;">
-                        <div class="form-label">离线凭证:</div>
-                        <textarea class="form-input" id="offlineTokenOutput" readonly rows="4"></textarea>
-                        <div class="form-label" style="margin-top: 10px;">有效期:</div>
-                        <div id="offlineTokenExpires" style="color: var(--text-secondary);"></div>
+                    <div id="offlineChallengeResult" style="margin-top: 20px; display: none;">
+                        <div class="form-label">Challenge:</div>
+                        <input type="text" class="form-input" id="offlineChallengeOutput" readonly>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">验证离线凭证</h3>
+                        <h3 class="card-title">步骤2：离线认证（场景 B）</h3>
                     </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                        设备断网后向边缘服务器提交签名。防重放：timestamp 时间窗 + 内存 offline nonce。
+                    </p>
                     <div id="offlineVerifyMessage" class="message-box"></div>
                     <form id="offlineVerifyForm">
                         <div class="form-group">
-                            <label class="form-label">离线凭证</label>
-                            <textarea class="form-input" id="offlineVerifyToken" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." rows="4" required></textarea>
+                            <label class="form-label">设备地址</label>
+                            <input type="text" class="form-input" id="offlineAuthAddress" placeholder="0x..." required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">设备私钥（演示用）</label>
+                            <input type="text" class="form-input" id="offlineAuthPrivateKey" placeholder="0x...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Challenge</label>
+                            <input type="text" class="form-input" id="offlineAuthChallenge" placeholder="从步骤1获取" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">离线 Nonce</label>
+                            <input type="number" class="form-input" id="offlineAuthNonce" value="1" min="1" required>
                         </div>
                         <button type="submit" class="btn btn-success">
-                            <span>验证凭证</span>
+                            <span>离线认证</span>
                         </button>
                     </form>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">批量生成离线凭证</h3>
+                        <h3 class="card-title">一键演示（开发模式）</h3>
                     </div>
-                    <div id="batchOfflineMessage" class="message-box"></div>
-                    <form id="batchOfflineForm">
-                        <div class="form-group">
-                            <label class="form-label">设备地址列表 (一行一个)</label>
-                            <textarea class="form-input" id="batchOfflineAddresses" rows="5" placeholder="0x123...&#10;0x456...&#10;0x789..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <span>批量生成</span>
-                        </button>
-                    </form>
+                    <div id="offlineDemoMessage" class="message-box"></div>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                        自动创建设备 → 上链注册 → 预热公钥 → 离线认证全流程
+                    </p>
+                    <button class="btn btn-warning" onclick="runOfflineDemo()">
+                        <span>运行离线认证演示</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1041,38 +1056,34 @@
             </div>
         </div>
 
-        <div id="cache" class="tab-content">
+        <div id="memory" class="tab-content">
             <div class="card-grid card-grid-2">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">更新缓存TTL</h3>
+                        <h3 class="card-title">边缘内存说明</h3>
                     </div>
-                    <div id="cacheTTLMessage" class="message-box"></div>
-                    <form id="cacheTTLForm">
-                        <div class="form-group">
-                            <label class="form-label">缓存有效期 (秒)</label>
-                            <input type="number" class="form-input" id="cacheTTL" placeholder="60-3600" min="60" max="3600" value="300">
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <span class="badge badge-info">当前: 300 秒 (5 分钟)</span>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <span>更新TTL</span>
-                        </button>
-                    </form>
+                    <p style="color: var(--text-secondary); line-height: 1.8;">
+                        边缘服务器仅在进程内存中保存公钥、challenge、离线 nonce。<br>
+                        <strong>不写入 Redis / SQLite / MongoDB</strong>，重启即清空。<br>
+                        链上合约为唯一持久化真相源。
+                    </p>
+                    <div style="margin-top: 20px;">
+                        <span class="badge badge-info">公钥 TTL: 3600s</span>
+                        <span class="badge badge-warning" style="margin-left: 8px;">离线窗口: ±60s</span>
+                    </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">缓存管理</h3>
+                        <h3 class="card-title">内存管理</h3>
                     </div>
                     <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                        清空所有缓存后，下次认证将重新从区块链获取数据。
+                        清空边缘内存后，断网设备需重新联网预热公钥才能离线认证。
                     </p>
-                    <div id="cacheClearMessage" class="message-box"></div>
+                    <div id="memoryClearMessage" class="message-box"></div>
                     <div class="btn-group">
-                        <button class="btn btn-warning" onclick="clearCache()">
-                            <span>🗑️ 清空缓存</span>
+                        <button class="btn btn-warning" onclick="clearMemory()">
+                            <span>🗑️ 清空边缘内存</span>
                         </button>
                     </div>
                 </div>
@@ -1088,7 +1099,8 @@
     <script>
         const API_BASE = '/api';
         
-        let deviceTypeChart, performanceChart, latencyTrendChart, cacheHitRateChart;
+        let deviceTypeChart, performanceChart, latencyTrendChart, authModeChart;
+        let lastDevPrivateKey = '';
 
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
@@ -1116,16 +1128,15 @@
                 // Update stats bar
                 document.getElementById('statDevices').textContent = data.deviceStats.total;
                 document.getElementById('statActive').textContent = data.deviceStats.active;
-                document.getElementById('statCacheRate').textContent = data.cache.cacheHitRate.toFixed(1) + '%';
-                document.getElementById('statOffline').textContent = data.offline.activeTokens;
-                document.getElementById('statPerf').textContent = data.performance.avgCacheTime + 'ms';
+                document.getElementById('statMemoryCached').textContent = data.memory.pubkeyCached;
+                document.getElementById('statOffline').textContent = data.memory.offlineRequests;
+                const avgTime = data.performance.avgChainTime || data.performance.avgOfflineTime || 0;
+                document.getElementById('statPerf').textContent = avgTime + 'ms';
 
-                // Update cache stats
-                document.getElementById('cacheTotal').textContent = data.cache.totalRequests;
-                document.getElementById('cacheHits').textContent = data.cache.cacheHits;
-                document.getElementById('cacheMisses').textContent = data.cache.cacheMisses;
-                document.getElementById('cacheRate').textContent = data.cache.cacheHitRate.toFixed(1) + '%';
-                document.getElementById('cacheRateBar').style.width = data.cache.cacheHitRate + '%';
+                document.getElementById('memPubkey').textContent = data.memory.pubkeyCached;
+                document.getElementById('memChainReq').textContent = data.memory.chainRequests;
+                document.getElementById('memOfflineReq').textContent = data.memory.offlineRequests;
+                document.getElementById('memKnown').textContent = data.memory.knownDevices;
 
                 // Update device type chart
                 updateDeviceTypeChart(data.deviceStats.byType);
@@ -1187,10 +1198,10 @@
             performanceChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['缓存认证', '区块链认证'],
+                    labels: ['链上认证', '离线认证'],
                     datasets: [{
                         label: '响应时间 (ms)',
-                        data: [data.avgCacheTime, data.avgChainTime],
+                        data: [data.avgChainTime, data.avgOfflineTime],
                         backgroundColor: ['#10b981', '#f59e0b'],
                         borderRadius: 8
                     }]
@@ -1233,7 +1244,7 @@
                 const data = await response.json();
 
                 updateLatencyTrendChart(data.history);
-                updateCacheHitRateChart(data.history);
+                updateAuthModeChart(data.history);
             } catch (error) {
                 console.error('Failed to load performance history:', error);
             }
@@ -1252,16 +1263,16 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: '缓存认证延迟 (ms)',
-                            data: data.map(d => d.avg_cache_time).reverse(),
+                            label: '链上认证延迟 (ms)',
+                            data: data.map(d => d.avg_chain_time).reverse(),
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.1)',
                             fill: true,
                             tension: 0.4
                         },
                         {
-                            label: '区块链认证延迟 (ms)',
-                            data: data.map(d => d.avg_chain_time).reverse(),
+                            label: '离线认证延迟 (ms)',
+                            data: data.map(d => d.avg_offline_time).reverse(),
                             borderColor: '#f59e0b',
                             backgroundColor: 'rgba(245, 158, 11, 0.1)',
                             fill: true,
@@ -1303,57 +1314,35 @@
             });
         }
 
-        function updateCacheHitRateChart(data) {
-            const ctx = document.getElementById('cacheHitRateChart').getContext('2d');
-            
-            if (cacheHitRateChart) cacheHitRateChart.destroy();
+        function updateAuthModeChart(data) {
+            const ctx = document.getElementById('authModeChart').getContext('2d');
+            if (authModeChart) authModeChart.destroy();
 
-            const labels = data.map(d => new Date(d.time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })).reverse();
-
-            cacheHitRateChart = new Chart(ctx, {
-                type: 'line',
+            const labels = data.map(d => d.time).reverse();
+            authModeChart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '缓存命中率 (%)',
-                        data: data.map(d => d.hit_rate).reverse(),
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
+                    labels,
+                    datasets: [
+                        {
+                            label: '链上认证',
+                            data: data.map(d => d.chain_requests).reverse(),
+                            backgroundColor: 'rgba(99, 102, 241, 0.7)'
+                        },
+                        {
+                            label: '离线认证',
+                            data: data.map(d => d.offline_requests).reverse(),
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: '#94a3b8'
-                            }
-                        }
-                    },
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
                     scales: {
-                        y: {
-                            min: 0,
-                            max: 100,
-                            grid: {
-                                color: 'rgba(148, 163, 184, 0.1)'
-                            },
-                            ticks: {
-                                color: '#94a3b8',
-                                callback: value => value + '%'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(148, 163, 184, 0.1)'
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        }
+                        y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
                     }
                 }
             });
@@ -1373,8 +1362,8 @@
                         </span>
                     </td>
                     <td>
-                        <span class="badge ${log.cached ? 'badge-success' : 'badge-warning'}">
-                            ${log.cached ? '缓存' : '链上'}
+                        <span class="badge ${log.mode === 'offline' ? 'badge-warning' : 'badge-success'}">
+                            ${log.mode === 'offline' ? '离线' : '链上'}
                         </span>
                     </td>
                     <td>${log.response_time}ms</td>
@@ -1402,7 +1391,7 @@
                 });
 
                 const data = await response.json();
-                showMessage(messageBox, data.message, response.ok);
+                showMessage(messageBox, data.error || '设备已上链注册', response.ok);
                 if (response.ok) loadDashboard();
             } catch (error) {
                 showMessage(messageBox, '注册失败: ' + error.message, false);
@@ -1411,6 +1400,33 @@
             btn.disabled = false;
             btn.innerHTML = '<span>注册设备</span>';
         });
+
+        async function devCreateDevice() {
+            const messageBox = document.getElementById('registerMessage');
+            try {
+                const response = await fetch(`${API_BASE}/auth/dev/create-and-register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deviceType: parseInt(document.getElementById('registerDeviceType').value) })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('registerAddress').value = data.address;
+                    document.getElementById('authAddress').value = data.address;
+                    document.getElementById('quickTestAddress').value = data.address;
+                    lastDevPrivateKey = data.privateKey;
+                    document.getElementById('devPrivateKeyOutput').value = data.privateKey;
+                    document.getElementById('devCreateResult').style.display = 'block';
+                    document.getElementById('authPrivateKey').value = data.privateKey;
+                    showMessage(messageBox, `设备已创建并上链: ${data.address}`, true);
+                    loadDashboard();
+                } else {
+                    showMessage(messageBox, data.error, false);
+                }
+            } catch (error) {
+                showMessage(messageBox, '创建失败: ' + error.message, false);
+            }
+        }
 
         // Batch register
         document.getElementById('batchRegisterForm').addEventListener('submit', async (e) => {
@@ -1424,22 +1440,17 @@
             btn.innerHTML = '<div class="loading"></div><span>注册中...</span>';
 
             let successCount = 0;
-            const deviceTypes = {
-                '1': 'DoorLock', '2': 'Camera', '3': 'Sensor',
-                '4': 'Thermostat', '5': 'Light', '6': 'Appliance'
-            };
 
             for (let i = 0; i < count; i++) {
-                const address = '0x' + Array.from({length: 40}, () => Math.floor(Math.random() * 16).toString(16)).join('');
-                const type = deviceType === 'random' 
-                    ? Math.floor(Math.random() * 6) + 1 
+                const type = deviceType === 'random'
+                    ? Math.floor(Math.random() * 6) + 1
                     : parseInt(deviceType);
 
                 try {
-                    const response = await fetch(`${API_BASE}/auth/register`, {
+                    const response = await fetch(`${API_BASE}/auth/dev/create-and-register`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ address, deviceType: type })
+                        body: JSON.stringify({ deviceType: type })
                     });
 
                     if (response.ok) successCount++;
@@ -1470,12 +1481,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         address: document.getElementById('authAddress').value,
-                        signature: document.getElementById('authSignature').value
+                        privateKey: document.getElementById('authPrivateKey').value || lastDevPrivateKey
                     })
                 });
 
                 const data = await response.json();
-                const message = data.message + (data.cached ? ' (缓存命中)' : ' (区块链查询)');
+                const message = data.message || data.error;
                 showMessage(messageBox, message, response.ok);
                 if (response.ok) loadDashboard();
             } catch (error) {
@@ -1498,8 +1509,8 @@
             btn.innerHTML = '<div class="loading"></div><span>测试中...</span>';
 
             let totalResponseTime = 0;
-            let cacheHits = 0;
             let successCount = 0;
+            const privateKey = document.getElementById('authPrivateKey').value || lastDevPrivateKey;
 
             for (let i = 0; i < count; i++) {
                 try {
@@ -1507,15 +1518,13 @@
                     const response = await fetch(`${API_BASE}/auth/authenticate`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ address, signature: '0x00' })
+                        body: JSON.stringify({ address, privateKey })
                     });
                     const responseTime = Date.now() - start;
 
                     if (response.ok) {
-                        const data = await response.json();
                         successCount++;
                         totalResponseTime += responseTime;
-                        if (data.cached) cacheHits++;
                     }
                 } catch (error) {
                     console.error('Quick test error:', error);
@@ -1523,9 +1532,8 @@
             }
 
             const avgTime = successCount > 0 ? Math.round(totalResponseTime / successCount) : 0;
-            const hitRate = successCount > 0 ? Math.round((cacheHits / successCount) * 100) : 0;
-            showMessage(messageBox, 
-                `测试完成: ${successCount}/${count} 成功 | 平均延迟: ${avgTime}ms | 缓存命中率: ${hitRate}%`, 
+            showMessage(messageBox,
+                `测试完成: ${successCount}/${count} 成功 | 平均链上延迟: ${avgTime}ms`,
                 true
             );
             loadDashboard();
@@ -1549,7 +1557,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         address: document.getElementById('weakNetworkAddress').value,
-                        delay: parseInt(document.getElementById('weakNetworkDelay').value)
+                        delay: parseInt(document.getElementById('weakNetworkDelay').value),
+                        privateKey: document.getElementById('authPrivateKey').value || lastDevPrivateKey
                     })
                 });
 
@@ -1568,106 +1577,108 @@
             btn.innerHTML = '<span>模拟弱网</span>';
         });
 
-        // Generate offline token
-        document.getElementById('offlineGenForm').addEventListener('submit', async (e) => {
+        document.getElementById('offlineChallengeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.querySelector('#offlineGenForm button');
-            const messageBox = document.getElementById('offlineGenMessage');
+            const btn = document.querySelector('#offlineChallengeForm button');
+            const messageBox = document.getElementById('offlineChallengeMessage');
+            const address = document.getElementById('offlineChallengeAddress').value;
 
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div><span>生成中...</span>';
+            btn.innerHTML = '<div class="loading"></div><span>获取中...</span>';
 
             try {
-                const response = await fetch(`${API_BASE}/auth/offline-token`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        address: document.getElementById('offlineGenAddress').value
-                    })
-                });
-
+                const response = await fetch(`${API_BASE}/auth/challenge/${address}`);
                 const data = await response.json();
                 if (response.ok) {
-                    showMessage(messageBox, '离线凭证生成成功', true);
-                    document.getElementById('offlineTokenOutput').value = data.token;
-                    document.getElementById('offlineTokenExpires').textContent = 
-                        new Date(data.expiresAt).toLocaleString('zh-CN');
-                    document.getElementById('offlineGenResult').style.display = 'block';
+                    document.getElementById('offlineChallengeOutput').value = data.challenge;
+                    document.getElementById('offlineAuthAddress').value = address;
+                    document.getElementById('offlineAuthChallenge').value = data.challenge;
+                    document.getElementById('offlineChallengeResult').style.display = 'block';
+                    showMessage(messageBox, `公钥已预热，Challenge 已生成（${data.responseTime}ms）`, true);
                 } else {
-                    showMessage(messageBox, data.error || '生成失败', false);
+                    showMessage(messageBox, data.error || '获取失败', false);
                 }
             } catch (error) {
-                showMessage(messageBox, '生成失败: ' + error.message, false);
+                showMessage(messageBox, '获取失败: ' + error.message, false);
             }
 
             btn.disabled = false;
-            btn.innerHTML = '<span>生成凭证</span>';
+            btn.innerHTML = '<span>获取 Challenge</span>';
         });
 
-        // Verify offline token
         document.getElementById('offlineVerifyForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.querySelector('#offlineVerifyForm button');
             const messageBox = document.getElementById('offlineVerifyMessage');
 
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div><span>验证中...</span>';
+            btn.innerHTML = '<div class="loading"></div><span>认证中...</span>';
 
             try {
                 const response = await fetch(`${API_BASE}/auth/offline-auth`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        token: document.getElementById('offlineVerifyToken').value
+                        address: document.getElementById('offlineAuthAddress').value,
+                        privateKey: document.getElementById('offlineAuthPrivateKey').value || lastDevPrivateKey,
+                        challenge: document.getElementById('offlineAuthChallenge').value,
+                        nonce: parseInt(document.getElementById('offlineAuthNonce').value),
+                        timestamp: Math.floor(Date.now() / 1000)
                     })
                 });
 
                 const data = await response.json();
-                showMessage(messageBox, 
-                    data.success ? `离线认证成功 | 响应时间: ${data.responseTime}ms` : data.error || '验证失败',
+                showMessage(messageBox,
+                    data.success ? `${data.message} | ${data.responseTime}ms` : data.error || '认证失败',
                     response.ok
                 );
+                if (response.ok) loadDashboard();
             } catch (error) {
-                showMessage(messageBox, '验证失败: ' + error.message, false);
+                showMessage(messageBox, '认证失败: ' + error.message, false);
             }
 
             btn.disabled = false;
-            btn.innerHTML = '<span>验证凭证</span>';
+            btn.innerHTML = '<span>离线认证</span>';
         });
 
-        // Batch offline tokens
-        document.getElementById('batchOfflineForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.querySelector('#batchOfflineForm button');
-            const messageBox = document.getElementById('batchOfflineMessage');
-            const addresses = document.getElementById('batchOfflineAddresses').value
-                .split('\n')
-                .map(a => a.trim())
-                .filter(a => a);
-
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div><span>生成中...</span>';
-
+        async function runOfflineDemo() {
+            const messageBox = document.getElementById('offlineDemoMessage');
             try {
-                const response = await fetch(`${API_BASE}/auth/batch-offline-tokens`, {
+                const reg = await fetch(`${API_BASE}/auth/dev/create-and-register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ addresses })
+                    body: JSON.stringify({ deviceType: 1 })
                 });
+                const device = await reg.json();
+                if (!reg.ok) throw new Error(device.error);
 
-                const data = await response.json();
-                const successCount = data.results.filter(r => r.success).length;
-                showMessage(messageBox, 
-                    `批量生成完成: ${successCount}/${addresses.length} 成功`,
+                const ch = await fetch(`${API_BASE}/auth/challenge/${device.address}`);
+                const challenge = await ch.json();
+                if (!ch.ok) throw new Error(challenge.error);
+
+                const auth = await fetch(`${API_BASE}/auth/offline-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        address: device.address,
+                        privateKey: device.privateKey,
+                        challenge: challenge.challenge,
+                        nonce: 1,
+                        timestamp: Math.floor(Date.now() / 1000)
+                    })
+                });
+                const result = await auth.json();
+                if (!auth.ok) throw new Error(result.error);
+
+                showMessage(messageBox,
+                    `演示成功！设备 ${device.address.substring(0, 10)}... 离线认证 ${result.responseTime}ms`,
                     true
                 );
+                loadDashboard();
             } catch (error) {
-                showMessage(messageBox, '生成失败: ' + error.message, false);
+                showMessage(messageBox, '演示失败: ' + error.message, false);
             }
-
-            btn.disabled = false;
-            btn.innerHTML = '<span>批量生成</span>';
-        });
+        }
 
         // Create device group
         document.getElementById('groupCreateForm').addEventListener('submit', async (e) => {
@@ -1843,47 +1854,15 @@
             }
         }
 
-        // Update cache TTL
-        document.getElementById('cacheTTLForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.querySelector('#cacheTTLForm button');
-            const messageBox = document.getElementById('cacheTTLMessage');
+        async function clearMemory() {
+            if (!confirm('确定要清空边缘内存吗？断网设备将无法离线认证直到重新预热。')) return;
 
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div><span>更新中...</span>';
-
-            try {
-                const response = await fetch(`${API_BASE}/auth/update-cache-ttl`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ttl: parseInt(document.getElementById('cacheTTL').value)
-                    })
-                });
-
-                const data = await response.json();
-                showMessage(messageBox, data.message, response.ok);
-            } catch (error) {
-                showMessage(messageBox, '更新失败: ' + error.message, false);
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = '<span>更新TTL</span>';
-        });
-
-        // Clear cache
-        async function clearCache() {
-            if (!confirm('确定要清空所有缓存吗？')) return;
-
-            const messageBox = document.getElementById('cacheClearMessage');
+            const messageBox = document.getElementById('memoryClearMessage');
             messageBox.innerHTML = '<div class="loading"></div><span>清空中...</span>';
             messageBox.className = 'message-box show';
 
             try {
-                const response = await fetch(`${API_BASE}/auth/clear-cache`, {
-                    method: 'POST'
-                });
-
+                const response = await fetch(`${API_BASE}/auth/clear-memory`, { method: 'POST' });
                 const data = await response.json();
                 showMessage(messageBox, data.message, response.ok);
                 if (response.ok) loadDashboard();

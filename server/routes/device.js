@@ -1,81 +1,52 @@
 const express = require('express');
 const router = express.Router();
-const { Device } = require('../models/database');
+const auth = require('../services/auth');
+const blockchain = require('../services/blockchain');
 
-/**
- * GET /api/device/list
- * 获取所有设备
- */
-router.get('/list', (req, res) => {
+router.get('/list', async (req, res) => {
     try {
-        const devices = Device.findAll();
-        res.json({
-            total: devices.length,
-            devices: devices.map(d => ({
-                address: d.address,
-                publicKey: d.public_key,
-                deviceType: d.device_type,
-                status: d.status,
-                registeredAt: d.registered_at,
-                lastAuthAt: d.last_auth_at
-            }))
-        });
+        const devices = await auth.getDeviceList();
+        res.json({ total: devices.length, devices });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * GET /api/device/active
- * 获取活跃设备
- */
-router.get('/active', (req, res) => {
+router.get('/active', async (req, res) => {
     try {
-        const devices = Device.findActive();
-        res.json({
-            total: devices.length,
-            devices
-        });
+        const devices = (await auth.getDeviceList()).filter((d) => d.status === 'Active');
+        res.json({ total: devices.length, devices });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * GET /api/device/type/:type
- * 按类型查询设备
- */
-router.get('/type/:type', (req, res) => {
+router.get('/type/:type', async (req, res) => {
     try {
-        const { type } = req.params;
-        const devices = Device.findByType(parseInt(type));
-        res.json({
-            type: parseInt(type),
-            total: devices.length,
-            devices
-        });
+        const type = parseInt(req.params.type);
+        const devices = (await auth.getDeviceList()).filter(
+            (d) => d.deviceType === (auth.DEVICE_TYPES[type] || 'Unknown')
+        );
+        res.json({ type, total: devices.length, devices });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-/**
- * GET /api/device/:address
- * 获取设备详情
- */
-router.get('/:address', (req, res) => {
+router.get('/:address', async (req, res) => {
     try {
-        const { address } = req.params;
-        const device = Device.findByAddress(address);
-
-        if (!device) {
-            return res.status(404).json({ error: '设备不存在' });
-        }
-
+        const device = await auth.getDeviceInfo(req.params.address);
         res.json(device);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(404).json({ error: error.message });
     }
+});
+
+router.get('/chain/status', (req, res) => {
+    res.json({
+        connected: blockchain.isConnected(),
+        contractAddress: process.env.CONTRACT_ADDRESS || null
+    });
 });
 
 module.exports = router;

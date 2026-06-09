@@ -3,38 +3,38 @@ pragma solidity ^0.8.20;
 
 /**
  * @title Authentication
- * @dev 基于区块链的去中心化身份认证合约
- * 支持设备注册、认证、注销，包含设备类型校验
+ * @dev 全去中心化身份认证合约 — 链上为唯一持久化真相源
+ * 支持设备注册、签名认证（链上 nonce 防重放）、注销
  */
 contract Authentication {
-    // 设备类型枚举
     enum DeviceType {
-        Unknown,    // 0: 未知
-        DoorLock,   // 1: 智能门锁
-        Camera,     // 2: 摄像头
-        Sensor,     // 3: 传感器
-        Thermostat, // 4: 温控器
-        Light,      // 5: 智能灯
-        Appliance   // 6: 家电
+        Unknown,
+        DoorLock,
+        Camera,
+        Sensor,
+        Thermostat,
+        Light,
+        Appliance
     }
 
-    // 设备状态
     enum DeviceStatus {
-        None,       // 0: 不存在
-        Registered, // 1: 已注册
-        Revoked     // 2: 已注销
+        None,
+        Registered,
+        Revoked
     }
 
-    // 设备信息结构
     struct DeviceInfo {
-        string publicKey;      // 设备公钥
-        DeviceType deviceType; // 设备类型
-        DeviceStatus status;   // 设备状态
-        uint256 registeredAt;  // 注册时间
-        uint256 lastAuthAt;    // 最后认证时间
+        string publicKey;
+        DeviceType deviceType;
+        DeviceStatus status;
+        uint256 registeredAt;
+        uint256 lastAuthAt;
+        uint256 nonce;
     }
 
-    // 事件定义
+    string public constant AUTH_ACTION = "authenticate";
+    uint256 public constant MAX_TIMESTAMP_WINDOW = 300;
+
     event DeviceRegistered(
         address indexed deviceAddress,
         string publicKey,
@@ -48,21 +48,13 @@ contract Authentication {
         uint256 timestamp
     );
 
-    event DeviceRevoked(
-        address indexed deviceAddress,
-        uint256 timestamp
-    );
+    event DeviceRevoked(address indexed deviceAddress, uint256 timestamp);
 
-    // 存储设备信息的映射
     mapping(address => DeviceInfo) public devices;
-
-    // 存储允许的设备类型
     mapping(DeviceType => bool) public allowedDeviceTypes;
 
-    // 合约所有者
     address public owner;
 
-    // 修饰符：仅允许已注册的设备
     modifier onlyRegistered(address deviceAddress) {
         require(
             devices[deviceAddress].status == DeviceStatus.Registered,
@@ -71,7 +63,6 @@ contract Authentication {
         _;
     }
 
-    // 修饰符：仅允许合约所有者
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can call this");
         _;
@@ -79,7 +70,6 @@ contract Authentication {
 
     constructor() {
         owner = msg.sender;
-        // 默认允许所有设备类型
         allowedDeviceTypes[DeviceType.DoorLock] = true;
         allowedDeviceTypes[DeviceType.Camera] = true;
         allowedDeviceTypes[DeviceType.Sensor] = true;
@@ -88,12 +78,6 @@ contract Authentication {
         allowedDeviceTypes[DeviceType.Appliance] = true;
     }
 
-    /**
-     * @dev 注册新设备
-     * @param deviceAddress 设备地址
-     * @param publicKey 设备公钥
-     * @param deviceType 设备类型
-     */
     function registerDevice(
         address deviceAddress,
         string calldata publicKey,
@@ -114,7 +98,8 @@ contract Authentication {
             deviceType: DeviceType(deviceType),
             status: DeviceStatus.Registered,
             registeredAt: block.timestamp,
-            lastAuthAt: 0
+            lastAuthAt: 0,
+            nonce: 0
         });
 
         emit DeviceRegistered(
@@ -125,47 +110,75 @@ contract Authentication {
         );
     }
 
-    /**
-     * @dev 设备认证
-     * @param deviceAddress 设备地址
-     * @param signature 设备签名（简化版本，实际应验证签名）
-     * @return 是否认证成功
-     */
     function authenticate(
         address deviceAddress,
+        uint256 nonce,
+        uint256 timestamp,
+        string calldata challenge,
         bytes calldata signature
     ) external onlyRegistered(deviceAddress) returns (bool) {
-        // 更新最后认证时间
-        devices[deviceAddress].lastAuthAt = block.timestamp;
+        DeviceInfo storage device = devices[deviceAddress];
 
-        // 简化版：只要设备已注册就认证成功
-        // 实际应用中需要验证签名
+        require(nonce == device.nonce, "Invalid nonce");
+        require(timestamp <= block.timestamp + 60, "Timestamp in future");
+        require(
+            block.timestamp - timestamp <= MAX_TIMESTAMP_WINDOW,
+            "Timestamp expired"
+        );
+        require(
+            _verifySignature(
+                deviceAddress,
+                nonce,
+                timestamp,
+                challenge,
+                signature
+            ),
+            "Invalid signature"
+        );
+
+        device.nonce++;
+        device.lastAuthAt = block.timestamp;
+
         emit DeviceAuthenticated(deviceAddress, true, block.timestamp);
-
         return true;
     }
 
-    /**
-     * @dev 注销设备
-     * @param deviceAddress 设备地址
-     */
+    function verifyAuth(
+        address deviceAddress,
+        uint256 nonce,
+        uint256 timestamp,
+        string calldata challenge,
+        bytes calldata signature
+    ) external view returns (bool) {
+        if (devices[deviceAddress].status != DeviceStatus.Registered) {
+            return false;
+        }
+        if (nonce != devices[deviceAddress].nonce) {
+            return false;
+        }
+        if (timestamp > block.timestamp + 60) {
+            return false;
+        }
+        if (block.timestamp - timestamp > MAX_TIMESTAMP_WINDOW) {
+            return false;
+        }
+        return
+            _verifySignature(
+                deviceAddress,
+                nonce,
+                timestamp,
+                challenge,
+                signature
+            );
+    }
+
     function revokeDevice(
         address deviceAddress
     ) external onlyOwner onlyRegistered(deviceAddress) {
         devices[deviceAddress].status = DeviceStatus.Revoked;
-
         emit DeviceRevoked(deviceAddress, block.timestamp);
     }
 
-    /**
-     * @dev 获取设备信息
-     * @param deviceAddress 设备地址
-     * @return publicKey 设备公钥
-     * @return deviceType 设备类型（uint8格式）
-     * @return status 设备状态（uint8格式）
-     * @return registeredAt 注册时间
-     * @return lastAuthAt 最后认证时间
-     */
     function getDeviceInfo(
         address deviceAddress
     )
@@ -176,7 +189,8 @@ contract Authentication {
             uint8 deviceType,
             uint8 status,
             uint256 registeredAt,
-            uint256 lastAuthAt
+            uint256 lastAuthAt,
+            uint256 nonce
         )
     {
         DeviceInfo memory info = devices[deviceAddress];
@@ -185,25 +199,19 @@ contract Authentication {
             uint8(info.deviceType),
             uint8(info.status),
             info.registeredAt,
-            info.lastAuthAt
+            info.lastAuthAt,
+            info.nonce
         );
     }
 
-    /**
-     * @dev 验证设备是否已注册且状态正常
-     * @param deviceAddress 设备地址
-     * @return isValid 是否有效
-     */
+    function getNonce(address deviceAddress) external view returns (uint256) {
+        return devices[deviceAddress].nonce;
+    }
+
     function isDeviceValid(address deviceAddress) external view returns (bool) {
         return devices[deviceAddress].status == DeviceStatus.Registered;
     }
 
-    /**
-     * @dev 验证设备类型
-     * @param deviceAddress 设备地址
-     * @param deviceType 要验证的设备类型
-     * @return isMatch 是否匹配
-     */
     function verifyDeviceType(
         address deviceAddress,
         uint8 deviceType
@@ -213,15 +221,52 @@ contract Authentication {
             devices[deviceAddress].deviceType == DeviceType(deviceType);
     }
 
-    /**
-     * @dev 设置设备类型是否允许
-     * @param deviceType 设备类型
-     * @param allowed 是否允许
-     */
     function setDeviceTypeAllowed(
         uint8 deviceType,
         bool allowed
     ) external onlyOwner {
         allowedDeviceTypes[DeviceType(deviceType)] = allowed;
+    }
+
+    function _verifySignature(
+        address deviceAddress,
+        uint256 nonce,
+        uint256 timestamp,
+        string calldata challenge,
+        bytes calldata signature
+    ) internal pure returns (bool) {
+        if (signature.length != 65) {
+            return false;
+        }
+
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(
+                deviceAddress,
+                nonce,
+                timestamp,
+                challenge,
+                AUTH_ACTION
+            )
+        );
+        bytes32 ethSignedHash = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash)
+        );
+
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        assembly {
+            r := calldataload(signature.offset)
+            s := calldataload(add(signature.offset, 32))
+            v := byte(0, calldataload(add(signature.offset, 64)))
+        }
+
+        if (v < 27) {
+            v += 27;
+        }
+
+        address signer = ecrecover(ethSignedHash, v, r, s);
+        return signer == deviceAddress;
     }
 }
