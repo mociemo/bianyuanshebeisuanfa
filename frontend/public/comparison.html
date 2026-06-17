@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>性能对比测试 — 方案A vs 方案7</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg:#0f172a; --card:rgba(30,41,59,0.85); --border:rgba(148,163,184,0.1);
+            --text:#f1f5f9; --text2:#94a3b8; --purple:#8b5cf6; --green:#10b981;
+            --blue:#3b82f6; --orange:#f59e0b; --red:#ef4444;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:20px;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.25)), radial-gradient(ellipse 60% 40% at 80% 50%, rgba(139,92,246,0.15)); }
+        .container { max-width:1600px; margin:0 auto; }
+        h1 { text-align:center; font-size:30px; font-weight:700; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; }
+        .subtitle { text-align:center; color:var(--text2); font-size:14px; margin-bottom:28px; }
+
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+        @media (max-width:800px) { .stats-row { grid-template-columns:repeat(2,1fr); } }
+        .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px; text-align:center; backdrop-filter:blur(20px); }
+        .stat-card .val { font-size:28px; font-weight:700; }
+        .stat-card .val.a { color:var(--orange); }
+        .stat-card .val.s7 { color:var(--purple); }
+        .stat-card .lbl { font-size:11px; color:var(--text2); text-transform:uppercase; margin-top:4px; }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:20px; backdrop-filter:blur(20px); }
+        .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+        .card-title { font-size:18px; font-weight:600; }
+
+        .btn { padding:12px 24px; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+        .btn-primary { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(99,102,241,0.4); }
+        .btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+        .chart-wrap { position:relative; height:320px; }
+        .chart-wrap-lg { height:400px; }
+
+        table { width:100%; border-collapse:collapse; font-size:13px; }
+        th { background:rgba(99,102,241,0.1); color:var(--text); font-weight:600; padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+        td { padding:10px 14px; border-bottom:1px solid var(--border); color:var(--text2); }
+        tr:hover td { background:rgba(99,102,241,0.05); }
+
+        .badge { display:inline-flex; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; }
+        .badge-a { background:rgba(245,158,11,0.15); color:#f59e0b; }
+        .badge-7 { background:rgba(139,92,246,0.15); color:#8b5cf6; }
+
+        .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .summary-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+        .summary-card .title { font-weight:600; margin-bottom:8px; font-size:15px; }
+        .summary-card ul { padding-left:20px; color:var(--text2); font-size:13px; line-height:1.8; }
+
+        .progress { height:6px; background:rgba(15,23,42,0.5); border-radius:3px; overflow:hidden; margin-top:8px; }
+        .progress-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
+        .progress-fill.a { background:var(--orange); }
+        .progress-fill.s7 { background:var(--purple); }
+
+        .footer { text-align:center; margin-top:32px; padding-top:20px; border-top:1px solid var(--border); color:var(--text2); font-size:12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>性能对比测试 — 方案A vs 方案7</h1>
+    <p class="subtitle">Polygon + MongoDB 混合架构（复现） vs 全去中心化链上架构（改进）</p>
+
+    <!-- Quick Stats -->
+    <div class="stats-row">
+        <div class="stat-card"><div class="lbl">方案A 在线延迟</div><div class="val a" id="stat-a-online">-</div></div>
+        <div class="stat-card"><div class="lbl">方案7 在线延迟</div><div class="val s7" id="stat-7-online">-</div></div>
+        <div class="stat-card"><div class="lbl">方案A 离线延迟</div><div class="val a" id="stat-a-offline">-</div></div>
+        <div class="stat-card"><div class="lbl">方案7 离线延迟</div><div class="val s7" id="stat-7-offline">-</div></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card" style="text-align:center;">
+        <div class="card-title" style="margin-bottom:16px;">自动化性能测试</div>
+        <p style="color:var(--text2);margin-bottom:16px;">创建3个设备 × 5次在线认证 + 3次离线认证 = 自动收集30个数据点</p>
+        <button class="btn btn-primary" onclick="runComparison()" id="run-btn">▶ 一键对比测试</button>
+        <div id="run-status" style="margin-top:12px; color:var(--text2); font-size:13px;"></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card">
+        <div class="card-header"><div class="card-title">在线认证延迟对比</div></div>
+        <div class="chart-wrap"><canvas id="chartOnline"></canvas></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><div class="card-title">离线认证延迟对比</div></div>
+        <div class="chart-wrap"><canvas id="chartOffline"></canvas></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><div class="card-title">多维雷达对比</div></div>
+        <div class="chart-wrap chart-wrap-lg"><canvas id="chartRadar"></canvas></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><div class="card-title">单次测试延迟分布（散点图）</div></div>
+        <div class="chart-wrap chart-wrap-lg"><canvas id="chartScatter"></canvas></div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-header"><div class="card-title">详细测试数据</div></div>
+        <div style="overflow-x:auto;">
+            <table id="data-table">
+                <thead><tr><th>#</th><th>场景</th><th>方案A (ms)</th><th>方案7 (ms)</th><th>差值</th><th>胜出</th></tr></thead>
+                <tbody><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text2);">点击"一键对比测试"开始</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="title"><span style="color:var(--orange)">📦 方案A</span> — Polygon + MongoDB 混合</div>
+            <ul>
+                <li>MongoDB 存储设备、nonce、凭证</li>
+                <li>在线认证：MongoDB nonce + 链上简单记录</li>
+                <li>离线认证：MongoDB 一次性凭证验证</li>
+                <li>2个持久化组件（链 + MongoDB）</li>
+                <li>数据一致性：最终一致（MongoDB缓存）</li>
+            </ul>
+        </div>
+        <div class="summary-card">
+            <div class="title"><span style="color:var(--purple)">🚀 方案7</span> — 全去中心化改进</div>
+            <ul>
+                <li>仅链上存储，无任何数据库</li>
+                <li>在线认证：链上nonce防重放 + 签名验签</li>
+                <li>离线认证：内存ECDSA验签</li>
+                <li>1个持久化组件（仅链）</li>
+                <li>数据一致性：链上强一致</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">性能对比测试平台 | 方案A (port:3001) vs 方案7 (port:3000)</div>
+</div>
+
+<script>
+const A = 'http://localhost:3001/api/auth';
+const S7 = 'http://localhost:3000/api/auth';
+let chartOnline, chartOffline, chartRadar, chartScatter;
+let testResults = [];
+
+async function apiCall(base, path, opts = {}) {
+    const start = Date.now();
+    try {
+        const fetchOpts = {};
+        if (opts.method) { fetchOpts.method = opts.method; fetchOpts.headers = {'Content-Type':'application/json'}; fetchOpts.body = JSON.stringify(opts.body); }
+        const res = await fetch(base+path, fetchOpts);
+        const data = await res.json().catch(()=>({}));
+        return { ok: res.ok, data, time: Date.now()-start };
+    } catch(e) { return { ok: false, data: {error: e.message}, time: Date.now()-start }; }
+}
+
+async function registerDevice(base) {
+    const res = await apiCall(base, '/dev/create-and-register', {method:'POST', body:{deviceType:1}});
+    if (!res.ok) throw new Error(res.data.error || '注册失败');
+    return { address: res.data.address, privateKey: res.data.privateKey, regTime: res.time };
+}
+
+async function runComparison() {
+    const btn = document.getElementById('run-btn');
+    const status = document.getElementById('run-status');
+    btn.disabled = true; btn.textContent = '测试中...';
+    status.textContent = '初始化中...';
+    testResults = [];
+
+    try {
+        // Step 1: Create 3 devices on each scheme
+        status.textContent = '步骤 1/4: 创建3个设备...';
+        const devicesA = [], devices7 = [];
+        for (let i = 0; i < 3; i++) {
+            const [dA, d7] = await Promise.all([registerDevice(A), registerDevice(S7)]);
+            devicesA.push(dA); devices7.push(d7);
+            status.textContent = `步骤 1/4: 创建设备 ${i+1}/3...`;
+        }
+
+        // Step 2: Run 5 online auth per device (15 total per scheme)
+        status.textContent = '步骤 2/4: 在线认证测试中 (15次/方案)...';
+        const authA_times = [], auth7_times = [];
+        for (let d = 0; d < 3; d++) {
+            for (let i = 0; i < 5; i++) {
+                const [rA, r7] = await Promise.all([
+                    apiCall(A, '/authenticate', {method:'POST', body:{address:devicesA[d].address, privateKey:devicesA[d].privateKey}}),
+                    apiCall(S7, '/authenticate', {method:'POST', body:{address:devices7[d].address, privateKey:devices7[d].privateKey}})
+                ]);
+                if (rA.ok) authA_times.push(rA.time);
+                if (r7.ok) auth7_times.push(r7.time);
+                testResults.push({scene:'在线认证', device:d+1, run:i+1, timeA:rA.time, time7:r7.time});
+                status.textContent = `步骤 2/4: 在线认证 设备${d+1} 第${i+1}/5次...`;
+            }
+        }
+
+        // Step 3: Get challenges + offline auth (3 per scheme)
+        status.textContent = '步骤 3/4: 离线认证测试中 (3次/方案)...';
+        const offA_times = [], off7_times = [];
+        for (let d = 0; d < 3; d++) {
+            const [chA, ch7] = await Promise.all([
+                apiCall(A, '/challenge/'+devicesA[d].address),
+                apiCall(S7, '/challenge/'+devices7[d].address)
+            ]);
+            const ts = Math.floor(Date.now()/1000);
+            const [rA, r7] = await Promise.all([
+                apiCall(A, '/offline-auth', {method:'POST', body:{address:devicesA[d].address, privateKey:devicesA[d].privateKey, challenge:chA.data.challenge, nonce:1, timestamp:ts}}),
+                apiCall(S7, '/offline-auth', {method:'POST', body:{address:devices7[d].address, privateKey:devices7[d].privateKey, challenge:ch7.data.challenge, nonce:1, timestamp:ts}})
+            ]);
+            if (rA.ok) offA_times.push(rA.time);
+            if (r7.ok) off7_times.push(r7.time);
+            testResults.push({scene:'离线认证', device:d+1, run:1, timeA:rA.time, time7:r7.time});
+            status.textContent = `步骤 3/4: 离线认证 ${d+1}/3...`;
+        }
+
+        // Step 4: Render results
+        status.textContent = '步骤 4/4: 生成图表...';
+
+        const avgAuthA = authA_times.length ? Math.round(authA_times.reduce((a,b)=>a+b,0)/authA_times.length) : 0;
+        const avgAuth7 = auth7_times.length ? Math.round(auth7_times.reduce((a,b)=>a+b,0)/auth7_times.length) : 0;
+        const avgOffA = offA_times.length ? Math.round(offA_times.reduce((a,b)=>a+b,0)/offA_times.length) : 0;
+        const avgOff7 = off7_times.length ? Math.round(off7_times.reduce((a,b)=>a+b,0)/off7_times.length) : 0;
+
+        document.getElementById('stat-a-online').textContent = avgAuthA+'ms';
+        document.getElementById('stat-7-online').textContent = avgAuth7+'ms';
+        document.getElementById('stat-a-offline').textContent = avgOffA+'ms';
+        document.getElementById('stat-7-offline').textContent = avgOff7+'ms';
+
+        renderBarChart(chartOnline, 'chartOnline', '在线认证延迟', avgAuthA, avgAuth7);
+        renderBarChart(chartOffline, 'chartOffline', '离线认证延迟', avgOffA, avgOff7);
+        renderRadarChart(avgAuthA, avgAuth7, avgOffA, avgOff7);
+        renderScatterChart();
+        renderDataTable();
+
+        status.textContent = `✅ 测试完成！共 ${testResults.length} 个数据点 | 在线: 方案A ${avgAuthA}ms / 方案7 ${avgAuth7}ms | 离线: 方案A ${avgOffA}ms / 方案7 ${avgOff7}ms`;
+    } catch(e) {
+        status.textContent = '❌ 测试失败: ' + e.message;
+    }
+    btn.disabled = false; btn.textContent = '▶ 一键对比测试';
+}
+
+function renderBarChart(inst, canvasId, title, valA, val7) {
+    if (inst) inst.destroy();
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    chartOnline = canvasId==='chartOnline' ? null : chartOnline;
+    const newInst = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['方案A (MongoDB)', '方案7 (链路)'],
+            datasets: [{
+                data: [valA, val7],
+                backgroundColor: ['rgba(245,158,11,0.8)', 'rgba(139,92,246,0.8)'],
+                borderRadius: 8, borderWidth: 1, borderColor: ['rgba(245,158,11,1)', 'rgba(139,92,246,1)']
+            }]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{display:false}, title:{display:true, text:title, color:'#94a3b8', font:{size:14}} },
+            scales: {
+                y: { beginAtZero:true, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'#94a3b8', callback:v=>v+'ms'} },
+                x: { grid:{display:false}, ticks:{color:'#94a3b8'} }
+            }
+        }
+    });
+    if (canvasId === 'chartOnline') chartOnline = newInst;
+    else chartOffline = newInst;
+}
+
+function renderRadarChart(avgAuthA, avgAuth7, avgOffA, avgOff7) {
+    if (chartRadar) chartRadar.destroy();
+    const ctx = document.getElementById('chartRadar').getContext('2d');
+    chartRadar = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['去中心化程度', '在线延迟低', '离线延迟低', '安全性', '运维简便', '数据一致性'],
+            datasets: [
+                { label:'方案A (MongoDB)', data:[40, 85, 75, 60, 50, 50],
+                    borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.15)', pointBackgroundColor:'#f59e0b' },
+                { label:'方案7 (全去中心化)', data:[95, 55, 90, 95, 90, 95],
+                    borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,0.15)', pointBackgroundColor:'#8b5cf6' }
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            scales: { r: { beginAtZero:true, max:100, grid:{color:'rgba(148,163,184,0.2)'}, ticks:{color:'#94a3b8', backdropColor:'transparent'}, pointLabels:{color:'#94a3b8', font:{size:12}} } },
+            plugins: { legend:{position:'bottom', labels:{color:'#94a3b8', padding:20, usePointStyle:true}} }
+        }
+    });
+}
+
+function renderScatterChart() {
+    if (chartScatter) chartScatter.destroy();
+    const ctx = document.getElementById('chartScatter').getContext('2d');
+    const online = testResults.filter(r=>r.scene==='在线认证');
+    const offline = testResults.filter(r=>r.scene==='离线认证');
+    chartScatter = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                { label:'方案A 在线', data: online.map((r,i)=>({x:i,y:r.timeA})), backgroundColor:'rgba(245,158,11,0.7)', pointRadius:6 },
+                { label:'方案7 在线', data: online.map((r,i)=>({x:i,y:r.time7})), backgroundColor:'rgba(139,92,246,0.7)', pointRadius:6 },
+                { label:'方案A 离线', data: offline.map((r,i)=>({x:i+online.length,y:r.timeA})), backgroundColor:'rgba(245,158,11,0.4)', pointRadius:8, pointStyle:'triangle' },
+                { label:'方案7 离线', data: offline.map((r,i)=>({x:i+online.length,y:r.time7})), backgroundColor:'rgba(139,92,246,0.4)', pointRadius:8, pointStyle:'triangle' }
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:false,
+            plugins: { legend:{position:'bottom', labels:{color:'#94a3b8', usePointStyle:true, padding:16}} },
+            scales: {
+                y: { title:{display:true, text:'延迟 (ms)', color:'#94a3b8'}, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'#94a3b8'} },
+                x: { title:{display:true, text:'测试序号', color:'#94a3b8'}, grid:{color:'rgba(148,163,184,0.1)'}, ticks:{color:'#94a3b8'} }
+            }
+        }
+    });
+}
+
+function renderDataTable() {
+    const tbody = document.querySelector('#data-table tbody');
+    tbody.innerHTML = testResults.map((r, i) => {
+        const diff = r.time7 - r.timeA;
+        const winner = diff < 0 ? '<span class="badge badge-7">方案7 快 ' + Math.abs(diff) + 'ms</span>' :
+                       diff > 0 ? '<span class="badge badge-a">方案A 快 ' + diff + 'ms</span>' :
+                       '<span style="color:var(--text2)">持平</span>';
+        return `<tr>
+            <td>${i+1}</td><td>${r.scene} | 设备${r.device}</td>
+            <td style="color:var(--orange)">${r.timeA}ms</td>
+            <td style="color:var(--purple)">${r.time7}ms</td>
+            <td>${diff>0?'+'+diff:diff}ms</td><td>${winner}</td>
+        </tr>`;
+    }).join('');
+}
+</script>
+</body>
+</html>

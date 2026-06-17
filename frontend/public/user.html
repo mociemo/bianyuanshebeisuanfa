@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复现方案 vs 改进方案 — 实时对比测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a; --card: rgba(30,41,59,0.85); --border: rgba(148,163,184,0.1);
+            --text: #f1f5f9; --text2: #94a3b8; --purple: #8b5cf6; --green: #10b981;
+            --blue: #3b82f6; --orange: #f59e0b; --red: #ef4444;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height:100vh; padding:16px;
+            background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.25)), radial-gradient(ellipse 60% 40% at 80% 50%, rgba(139,92,246,0.15)); }
+        .container { max-width:1600px; margin:0 auto; }
+        h1 { text-align:center; font-size:28px; font-weight:700; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; }
+        .subtitle { text-align:center; color:var(--text2); font-size:13px; margin-bottom:20px; }
+        .status-bar { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+        .status-item { flex:1; min-width:200px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; align-items:center; gap:12px; backdrop-filter:blur(20px); }
+        .status-dot { width:10px; height:10px; border-radius:50%; }
+        .status-dot.online { background:var(--green); box-shadow:0 0 8px rgba(16,185,129,0.6); }
+        .status-dot.offline { background:var(--red); }
+        .status-dot.checking { background:var(--orange); animation:pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .status-label { font-size:11px; color:var(--text2); text-transform:uppercase; }
+        .status-value { font-size:15px; font-weight:600; }
+
+        .tabs { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+        .tab { flex:1; min-width:100px; padding:12px 16px; text-align:center; cursor:pointer; background:var(--card); border:1px solid var(--border); border-radius:10px; color:var(--text2); font-weight:500; transition:all 0.3s; font-size:13px; }
+        .tab:hover { border-color:rgba(99,102,241,0.4); color:var(--text); }
+        .tab.active { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-color:transparent; }
+
+        .tab-content { display:none; }
+        .tab-content.active { display:block; }
+
+        .dual-panel { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+        @media (max-width:900px) { .dual-panel { grid-template-columns:1fr; } }
+
+        .panel { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; backdrop-filter:blur(20px); }
+        .panel.scheme-a { border-left:3px solid var(--orange); }
+        .panel.scheme-7 { border-left:3px solid var(--purple); }
+        .panel-title { font-size:16px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .panel-title .arch { font-size:11px; font-weight:400; color:var(--text2); margin-left:auto; }
+
+        .form-group { margin-bottom:14px; }
+        .form-label { display:block; margin-bottom:6px; color:var(--text2); font-size:12px; font-weight:500; }
+        .form-input { width:100%; padding:10px 14px; background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; font-family:inherit; }
+        .form-input:focus { outline:none; border-color:var(--purple); }
+
+        .btn { padding:10px 20px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+        .btn-primary { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+        .btn-primary:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(99,102,241,0.3); }
+        .btn-success { background:linear-gradient(135deg,#10b981,#059669); color:#fff; }
+        .btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+        .result-box { margin-top:14px; padding:12px; border-radius:8px; font-size:12px; display:none; }
+        .result-box.show { display:block; }
+        .result-box.success { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#10b981; }
+        .result-box.error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; }
+
+        .latency-bar { display:flex; align-items:center; gap:10px; margin:8px 0; }
+        .latency-bar .bar { height:24px; border-radius:6px; transition:width 0.5s ease; display:flex; align-items:center; padding:0 8px; font-size:11px; font-weight:600; color:#fff; }
+        .latency-bar .bar.a { background:linear-gradient(135deg,#f59e0b,#d97706); }
+        .latency-bar .bar.s7 { background:linear-gradient(135deg,#8b5cf6,#7c3aed); }
+
+        .log-section { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+        .log-entry { font-size:12px; padding:6px 0; border-bottom:1px solid var(--border); color:var(--text2); display:flex; gap:12px; }
+        .log-time { color:var(--text2); min-width:75px; }
+        .log-a { color:var(--orange); min-width:100px; }
+        .log-7 { color:var(--purple); min-width:100px; }
+        .footer { text-align:center; margin-top:32px; padding-top:20px; border-top:1px solid var(--border); color:var(--text2); font-size:12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>复现方案 vs 改进方案 — 实时对比测试</h1>
+    <p class="subtitle">方案A（Polygon + MongoDB 混合 · 端口3001） vs 方案7（全去中心化 · 端口3000）</p>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-dot checking" id="dot-frontend"></div>
+            <div><div class="status-label">前端对比</div><div class="status-value">端口 8080</div></div>
+        </div>
+        <div class="status-item">
+            <div class="status-dot checking" id="dot-a"></div>
+            <div><div class="status-label">方案A — MongoDB混合</div><div class="status-value" id="st-a">检查中...</div></div>
+        </div>
+        <div class="status-item">
+            <div class="status-dot checking" id="dot-7"></div>
+            <div><div class="status-label">方案7 — 全去中心化</div><div class="status-value" id="st-7">检查中...</div></div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="register">设备注册</div>
+        <div class="tab" data-tab="auth">在线认证</div>
+        <div class="tab" data-tab="offline">离线认证</div>
+    </div>
+
+    <!-- Register Tab -->
+    <div id="register" class="tab-content active">
+        <div class="dual-panel">
+            <div class="panel scheme-a">
+                <div class="panel-title">📦 方案A — Polygon + MongoDB 复现<span class="arch">port:3001</span></div>
+                <div id="reg-a-msg" class="result-box"></div>
+                <button class="btn btn-primary" onclick="compareRegister()" id="reg-btn">一键创建设备（双方案同时）</button>
+                <div id="reg-a-result" style="margin-top:12px; font-size:12px; color:var(--text2);"></div>
+            </div>
+            <div class="panel scheme-7">
+                <div class="panel-title">🚀 方案7 — 全去中心化 改进版<span class="arch">port:3000</span></div>
+                <div id="reg-7-msg" class="result-box"></div>
+                <div id="reg-7-result" style="margin-top:12px; font-size:12px; color:var(--text2);"></div>
+            </div>
+        </div>
+        <div id="reg-compare" style="display:none; margin-top:12px;">
+            <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案A:</span><div class="bar a" id="reg-bar-a">0ms</div></div>
+            <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案7:</span><div class="bar s7" id="reg-bar-7">0ms</div></div>
+        </div>
+    </div>
+
+    <!-- Auth Tab -->
+    <div id="auth" class="tab-content">
+        <div class="dual-panel">
+            <div class="panel scheme-a">
+                <div class="panel-title">📦 方案A — MongoDB nonce + 链上记录<span class="arch">port:3001</span></div>
+                <div id="auth-a-msg" class="result-box"></div>
+                <div class="form-group"><label class="form-label">设备地址</label><input class="form-input" id="auth-addr" placeholder="0x..."></div>
+                <div class="form-group"><label class="form-label">设备私钥</label><input class="form-input" id="auth-pk" placeholder="0x..."></div>
+                <button class="btn btn-primary" onclick="compareAuth()">双方案同时认证</button>
+            </div>
+            <div class="panel scheme-7">
+                <div class="panel-title">🚀 方案7 — 链上nonce + 签名验签<span class="arch">port:3000</span></div>
+                <div id="auth-7-msg" class="result-box"></div>
+            </div>
+        </div>
+        <div id="auth-compare" style="display:none; margin-top:12px;">
+            <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案A:</span><div class="bar a" id="auth-bar-a">0ms</div></div>
+            <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案7:</span><div class="bar s7" id="auth-bar-7">0ms</div></div>
+        </div>
+    </div>
+
+    <!-- Offline Tab -->
+    <div id="offline" class="tab-content">
+        <div class="dual-panel">
+            <div class="panel scheme-a">
+                <div class="panel-title">📦 方案A — MongoDB凭证验证<span class="arch">port:3001</span></div>
+                <div id="off-a-msg" class="result-box"></div>
+                <button class="btn btn-success" onclick="compareOffline()">双方案离线认证演示</button>
+            </div>
+            <div class="panel scheme-7">
+                <div class="panel-title">🚀 方案7 — 内存ECDSA验签<span class="arch">port:3000</span></div>
+                <div id="off-7-msg" class="result-box"></div>
+            </div>
+        </div>
+        <div id="off-compare" style="display:none; margin-top:12px;">
+            <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案A:</span><div class="bar a" id="off-bar-a">0ms</div></div>
+            <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案7:</span><div class="bar s7" id="off-bar-7">0ms</div></div>
+        </div>
+    </div>
+
+    <!-- Operation Log -->
+    <div class="log-section" style="margin-top:24px;">
+        <div style="font-weight:600; margin-bottom:12px;">操作日志</div>
+        <div id="op-log" style="max-height:300px; overflow-y:auto;"></div>
+    </div>
+
+    <div class="footer">复现方案 vs 改进方案 — 实时对比测试平台 | 各端口: 前端8080 | 方案A 3001 | 方案7 3000</div>
+</div>
+
+<script>
+const A = 'http://localhost:3001/api/auth';
+const S7 = 'http://localhost:3000/api/auth';
+let lastDeviceA = null, lastDevice7 = null;
+
+// Status check
+async function checkStatus() {
+    try { const r = await fetch('http://localhost:3001/health'); const d = await r.json();
+        document.getElementById('dot-a').className = 'status-dot ' + (d.status==='ok'?'online':'offline');
+        document.getElementById('st-a').textContent = d.status==='ok'?'在线 ('+d.architecture+')':'离线'; }
+    catch(e) { document.getElementById('dot-a').className = 'status-dot offline'; document.getElementById('st-a').textContent = '不可达'; }
+    try { const r = await fetch('http://localhost:3000/health'); const d = await r.json();
+        document.getElementById('dot-7').className = 'status-dot ' + (d.status==='ok'?'online':'offline');
+        document.getElementById('st-7').textContent = d.status==='ok'?'在线 ('+d.architecture+')':'离线'; }
+    catch(e) { document.getElementById('dot-7').className = 'status-dot offline'; document.getElementById('st-7').textContent = '不可达'; }
+    document.getElementById('dot-frontend').className = 'status-dot online';
+}
+
+function addLog(action, resultA, result7) {
+    const log = document.getElementById('op-log');
+    const now = new Date().toLocaleTimeString('zh-CN',{hour12:false});
+    log.innerHTML = `<div class="log-entry"><span class="log-time">${now}</span><span>${action}</span><span class="log-a">方案A: ${resultA}</span><span class="log-7">方案7: ${result7}</span></div>` + log.innerHTML;
+    if (log.children.length > 50) log.lastChild.remove();
+}
+
+function showBar(prefix, timeA, time7) {
+    const max = Math.max(timeA, time7, 1);
+    document.getElementById(prefix+'-bar-a').style.width = (timeA/max*100)+'%';
+    document.getElementById(prefix+'-bar-a').textContent = timeA+'ms';
+    document.getElementById(prefix+'-bar-7').style.width = (time7/max*100)+'%';
+    document.getElementById(prefix+'-bar-7').textContent = time7+'ms';
+    document.getElementById(prefix+'-compare').style.display = 'block';
+}
+
+async function apiCall(base, path, opts = {}) {
+    const start = Date.now();
+    try {
+        const fetchOpts = {};
+        if (opts.method) { fetchOpts.method = opts.method; fetchOpts.headers = {'Content-Type':'application/json'}; fetchOpts.body = JSON.stringify(opts.body); }
+        const res = await fetch(base+path, fetchOpts);
+        const data = await res.json().catch(()=>({}));
+        return { ok: res.ok, data, time: Date.now()-start };
+    } catch(e) { return { ok: false, data: {error: e.message}, time: Date.now()-start }; }
+}
+
+async function registerDevice(base) {
+    const res = await apiCall(base, '/dev/create-and-register', {method:'POST', body:{deviceType:1}});
+    return res;
+}
+
+async function compareRegister() {
+    const btn = document.getElementById('reg-btn');
+    btn.disabled = true; btn.textContent = '注册中...';
+    document.getElementById('reg-a-result').textContent = '';
+    document.getElementById('reg-7-result').textContent = '';
+
+    const [rA, r7] = await Promise.all([registerDevice(A), registerDevice(S7)]);
+
+    if (rA.ok && rA.data.address) { lastDeviceA = rA.data;
+        document.getElementById('reg-a-result').innerHTML = `<span style="color:#10b981">✔ 成功</span> 地址: ${rA.data.address.substring(0,14)}...<br>类型: ${rA.data.deviceType} | 耗时: ${rA.time}ms`;
+        document.getElementById('auth-addr').value = rA.data.address;
+        document.getElementById('auth-pk').value = rA.data.privateKey || '';
+    } else { document.getElementById('reg-a-result').innerHTML = `<span style="color:#ef4444">✘</span> ${rA.data.error||'失败'}`; }
+
+    if (r7.ok && r7.data.address) { lastDevice7 = r7.data;
+        document.getElementById('reg-7-result').innerHTML = `<span style="color:#10b981">✔ 成功</span> 地址: ${r7.data.address.substring(0,14)}...<br>类型: ${r7.data.deviceType} | 耗时: ${r7.time}ms`;
+    } else { document.getElementById('reg-7-result').innerHTML = `<span style="color:#ef4444">✘</span> ${r7.data.error||'失败'}`; }
+
+    if (rA.ok && r7.ok) showBar('reg', rA.time, r7.time);
+    addLog('设备注册', rA.time+'ms'+(rA.ok?'✔':'✘'), r7.time+'ms'+(r7.ok?'✔':'✘'));
+    btn.disabled = false; btn.textContent = '一键创建设备（双方案同时）';
+}
+
+async function compareAuth() {
+    const addr = document.getElementById('auth-addr').value;
+    const pk = document.getElementById('auth-pk').value;
+    if (!addr) { alert('请先注册设备获取地址'); return; }
+
+    const body = { address: addr, privateKey: pk };
+    const [rA, r7] = await Promise.all([
+        apiCall(A, '/authenticate', {method:'POST', body}),
+        apiCall(S7, '/authenticate', {method:'POST', body})
+    ]);
+
+    document.getElementById('auth-a-msg').className = 'result-box show ' + (rA.ok?'success':'error');
+    document.getElementById('auth-a-msg').innerHTML = rA.ok ? `✔ 在线认证成功 | nonce:${rA.data.nonce} | ${rA.time}ms` : `✘ ${rA.data.error||'失败'}`;
+    document.getElementById('auth-7-msg').className = 'result-box show ' + (r7.ok?'success':'error');
+    document.getElementById('auth-7-msg').innerHTML = r7.ok ? `✔ 在线认证成功 | nonce:${r7.data.nonce} | ${r7.time}ms` : `✘ ${r7.data.error||'失败'}`;
+
+    if (rA.ok && r7.ok) showBar('auth', rA.time, r7.time);
+    addLog('在线认证', rA.time+'ms'+(rA.ok?'✔':'✘'), r7.time+'ms'+(r7.ok?'✔':'✘'));
+}
+
+async function compareOffline() {
+    // Create device first
+    const [devA, dev7] = await Promise.all([registerDevice(A), registerDevice(S7)]);
+    if (!devA.ok || !dev7.ok) { alert('创建设备失败，请确保两个服务器都在运行'); return; }
+
+    // Get challenges
+    const [chA, ch7] = await Promise.all([
+        apiCall(A, '/challenge/'+devA.data.address),
+        apiCall(S7, '/challenge/'+dev7.data.address)
+    ]);
+
+    // Offline auth
+    const ts = Math.floor(Date.now()/1000);
+    const [offA, off7] = await Promise.all([
+        apiCall(A, '/offline-auth', {method:'POST', body:{address:devA.data.address, privateKey:devA.data.privateKey, challenge:chA.data.challenge, nonce:1, timestamp:ts}}),
+        apiCall(S7, '/offline-auth', {method:'POST', body:{address:dev7.data.address, privateKey:dev7.data.privateKey, challenge:ch7.data.challenge, nonce:1, timestamp:ts}})
+    ]);
+
+    document.getElementById('off-a-msg').className = 'result-box show ' + (offA.ok?'success':'error');
+    document.getElementById('off-a-msg').innerHTML = offA.ok ? `✔ 离线认证成功 | ${offA.data.message} | ${offA.time}ms` : `✘ ${offA.data.error||'失败'}`;
+    document.getElementById('off-7-msg').className = 'result-box show ' + (off7.ok?'success':'error');
+    document.getElementById('off-7-msg').innerHTML = off7.ok ? `✔ 离线认证成功 | ${off7.data.message} | ${off7.time}ms` : `✘ ${off7.data.error||'失败'}`;
+
+    if (offA.ok && off7.ok) showBar('off', offA.time, off7.time);
+    addLog('离线认证', offA.time+'ms'+(offA.ok?'✔':'✘'), off7.time+'ms'+(off7.ok?'✔':'✘'));
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+});
+
+checkStatus();
+setInterval(checkStatus, 15000);
+</script>
+</body>
+</html>

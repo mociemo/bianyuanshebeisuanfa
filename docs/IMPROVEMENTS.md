@@ -1,27 +1,29 @@
-# 方案 7：全去中心化架构改进说明
+# scheme-7：全去中心化架构改进说明
 
 ## 改进目标
 
-将系统从「区块链 + Redis + SQLite 混合架构」升级为**链上唯一真相源**，彻底移除中心化持久化存储，同时保留离线认证能力。
+将系统从「Polygon 区块链 + MongoDB 混合架构」升级为**链上唯一真相源**，彻底移除中心化持久化存储，同时保留离线认证能力。
+
+对应代码：`scheme-a/`（原论文复现）→ `scheme-7/`（改进方案）
 
 ## 改进前后对比
 
-| 维度 | 改进前 | 改进后（方案 7） |
-|------|--------|------------------|
-| 设备注册 | SQLite + 链双写 | 仅链 |
-| 设备状态 | SQLite | 链 `status` 字段 |
-| 在线状态 | SQLite `last_auth_at` | 链 `lastAuthAt` + 边缘观测 |
-| 认证缓存 | Redis（5min TTL） | 无 |
-| 离线凭证 | JWT + SQLite + Redis | 设备 ECDSA 签名 + 内存验签 |
-| 防重放（在线） | 无 / 弱 | 链上自增 nonce |
-| 防重放（离线） | JWT 一次性 | timestamp 窗口 + 内存 nonce |
-| 边缘持久化 | SQLite + Redis | 无（仅进程内存） |
+| 维度 | scheme-a（复现） | scheme-7（改进） |
+|------|-------------------|------------------|
+| 设备注册 | MongoDB + 链双写 | 仅链 |
+| 设备状态 | MongoDB | 链 `status` 字段 |
+| 在线状态 | MongoDB `lastAuthAt` | 链 `lastAuthAt` + 边缘观测 |
+| 认证缓存 | MongoDB 查询 | 无 |
+| 离线凭证 | 一次性凭证哈希 + MongoDB | 设备 ECDSA 签名 + 内存验签 |
+| 防重放（在线） | MongoDB nonce | 链上自增 nonce |
+| 防重放（离线） | 一次性凭证 + MongoDB | timestamp 窗口 + 内存 nonce |
+| 边缘持久化 | MongoDB | 无（仅进程内存） |
 
 ## 核心设计决策
 
 ### 1. 链上为唯一真相源
 
-所有持久化状态写入 `Authentication.sol`：
+所有持久化状态写入 `Authentication.sol`（位于 `scheme-7/contracts/`）：
 
 - `publicKey`、`deviceType`、`status`
 - `registeredAt`、`lastAuthAt`
@@ -29,7 +31,7 @@
 
 ### 2. 边缘服务器 = 无状态验签代理
 
-`memoryStore.js` 仅在进程内存中保存：
+`scheme-7/server/services/memoryStore.js` 仅在进程内存中保存：
 
 - 公钥缓存（从链预热，TTL 可配置）
 - Challenge（离线认证一次性随机数）
@@ -58,14 +60,12 @@ messageHash = keccak256(abi.encodePacked(
 - 在线：`challenge = ""`
 - 离线：`challenge = 边缘下发的随机 hex`
 
-### 5. 移除的组件
+### 5. 移除的组件（对比 scheme-a）
 
-- `better-sqlite3` / SQLite
-- `ioredis` / Redis
-- `jsonwebtoken` / JWT 离线凭证
-- `uuid` 凭证 ID
-- `server/models/database.js`
-- `server/services/cache.js`
+- `mongodb` / `mongoose`（MongoDB 数据库）
+- MongoDB 设备表
+- MongoDB 操作层
+- 中心化离线凭证哈希存储
 
 ## 威胁模型说明
 
@@ -79,7 +79,7 @@ messageHash = keccak256(abi.encodePacked(
 
 ## 性能权衡
 
-去掉 Redis 后：
+去掉 MongoDB 后：
 
 - 每次在线写链认证：~200–500ms（Polygon RPC + 确认）
 - 离线认证：~5–15ms（纯本地验签）
@@ -87,15 +87,17 @@ messageHash = keccak256(abi.encodePacked(
 
 ## 合约变更摘要
 
+`scheme-7/contracts/Authentication.sol` 相比 `scheme-a/contracts/` 版本的变更：
+
 - 新增 `nonce` 字段
 - `authenticate` 增加 nonce/timestamp/challenge 参数并验签
 - 新增 `verifyAuth` view 方法
 - 新增 `getNonce` view 方法
 
-## 迁移步骤（从旧版）
+## 迁移步骤（从 scheme-a 到 scheme-7）
 
-1. 部署新合约
-2. 重新注册设备（或编写迁移脚本读旧 SQLite 批量上链）
-3. 更新 `.env`，移除 Redis/JWT 配置
-4. `npm install`（依赖已精简）
-5. 停用 Redis 服务
+1. 部署 scheme-7 新合约
+2. 重新注册设备（或编写迁移脚本读 MongoDB 批量上链）
+3. 更新 `.env`，移除 MongoDB 相关配置
+4. 在 `scheme-7/` 目录下 `npm install`
+5. 停用 MongoDB 服务

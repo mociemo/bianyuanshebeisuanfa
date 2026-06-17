@@ -1,0 +1,8 @@
+{
+  "name": "comparison-frontend",
+  "version": "1.0.0",
+  "description": "对比测试前端 — 复现方案 vs 改进方案",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "express": "^4.18.2", "cors": "^2.8.5" }
+}
