@@ -51,10 +51,23 @@ async function registerDevice(deviceAddress, publicKey, deviceType) {
     return { transactionHash: result.transactionHash };
 }
 
-async function authenticateDevice(deviceAddress) {
+async function authenticateDevice(deviceAddress, privateKey) {
     ensureContract();
-    const result = await contract.methods.authenticate(deviceAddress)
-        .send({ from: deviceAddress, gas: 200000 });
+    const method = contract.methods.authenticate(deviceAddress);
+
+    if (privateKey) {
+        const gas = await method.estimateGas({ from: deviceAddress }).catch(() => 200000n);
+        const gasPrice = await web3.eth.getGasPrice();
+        const txData = {
+            from: deviceAddress, to: contract.options.address,
+            data: method.encodeABI(), gas: gas.toString(), gasPrice: gasPrice.toString()
+        };
+        const signed = await web3.eth.accounts.signTransaction(txData, privateKey);
+        const result = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+        return { transactionHash: result.transactionHash };
+    }
+
+    const result = await method.send({ from: deviceAddress, gas: 200000 });
     return { transactionHash: result.transactionHash };
 }
 

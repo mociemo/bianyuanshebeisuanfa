@@ -48,7 +48,7 @@
   "success": true,
   "address": "0x...",
   "transactionHash": "0xabc...",
-  "responseTime": 450
+  "responseTime": 47
 }
 ```
 
@@ -110,7 +110,7 @@
   "mode": "online",
   "nonce": 0,
   "transactionHash": "0x...",
-  "responseTime": 520,
+  "responseTime": 81,
   "message": "在线认证成功（链上 nonce 已递增）"
 }
 ```
@@ -139,7 +139,7 @@
   "pubkeyCached": true,
   "pubkeyTtl": 3600,
   "offlineWindow": 60,
-  "responseTime": 180
+  "responseTime": 15
 }
 ```
 
@@ -194,9 +194,9 @@
 {
   "architecture": "fully-decentralized",
   "storage": "chain-only",
-  "deviceStats": { "total": 5, "active": 4, "revoked": 1, "byType": {} },
-  "performance": { "avgChainTime": 480, "avgOfflineTime": 8 },
-  "memory": { "pubkeyCached": 4, "chainRequests": 12, "offlineRequests": 3 },
+  "deviceStats": { "total": 5, "active": 5, "revoked": 0, "byType": {} },
+  "performance": { "avgChainTime": 46, "avgOfflineTime": 10, "avgViewVerifyTime": 17 },
+  "memory": { "pubkeyCached": 5, "chainRequests": 26, "offlineRequests": 6, "viewVerifyRequests": 10 },
   "recentLogs": []
 }
 ```

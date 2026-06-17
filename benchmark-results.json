@@ -1,0 +1,486 @@
+{
+  "timestamp": "2026-06-17T16:34:52.528Z",
+  "environment": {
+    "os": "win32",
+    "node": "v20.17.0",
+    "testDevices": 5,
+    "authsPerDevice": 3,
+    "scheme7": "fully-decentralized",
+    "schemeA": "hybrid-blockchain-mongodb"
+  },
+  "registration": {
+    "scheme7_ms": {
+      "min": 32,
+      "max": 70,
+      "avg": 47,
+      "p50": 42,
+      "p90": 70,
+      "p99": 70,
+      "n": 5
+    },
+    "schemeA_ms": {
+      "min": 36,
+      "max": 106,
+      "avg": 58,
+      "p50": 49,
+      "p90": 106,
+      "p99": 106,
+      "n": 5
+    }
+  },
+  "onlineAuth": {
+    "scheme7_ms": {
+      "min": 39,
+      "max": 134,
+      "avg": 81,
+      "p50": 87,
+      "p90": 95,
+      "p99": 134,
+      "n": 10
+    },
+    "schemeA_ms": {
+      "min": 40,
+      "max": 136,
+      "avg": 78,
+      "p50": 86,
+      "p90": 120,
+      "p99": 136,
+      "n": 13
+    },
+    "comparison": "scheme-7: 81ms avg vs scheme-a: 78ms avg"
+  },
+  "viewVerify": {
+    "scheme7_ms": {
+      "min": 11,
+      "max": 20,
+      "avg": 17,
+      "p50": 17,
+      "p90": 20,
+      "p99": 20,
+      "n": 10
+    }
+  },
+  "offlineAuth": {
+    "scheme7_ms": {
+      "min": 11,
+      "max": 14,
+      "avg": 13,
+      "p50": 13,
+      "p90": 14,
+      "p99": 14,
+      "n": 5
+    },
+    "schemeA_ms": {
+      "min": 19,
+      "max": 34,
+      "avg": 25,
+      "p50": 25,
+      "p90": 34,
+      "p99": 34,
+      "n": 5
+    },
+    "improvement": "48%"
+  },
+  "weakNetwork": {
+    "scheme7_online_ms": 2052,
+    "schemeA_online_ms": 2,
+    "scheme7_offline_ms": 11,
+    "schemeA_offline_ms": 21
+  },
+  "dashboard": {
+    "scheme7": {
+      "architecture": "fully-decentralized",
+      "storage": "chain-only",
+      "edgeMemory": "ephemeral",
+      "deviceStats": {
+        "total": 5,
+        "active": 5,
+        "revoked": 0,
+        "byType": {
+          "DoorLock": 5,
+          "Camera": 0,
+          "Sensor": 0,
+          "Thermostat": 0,
+          "Light": 0,
+          "Appliance": 0
+        }
+      },
+      "performance": {
+        "avgChainTime": 46,
+        "avgOfflineTime": 10
+      },
+      "memory": {
+        "pubkeyCached": 5,
+        "knownDevices": 5,
+        "totalRequests": 32,
+        "chainRequests": 26,
+        "offlineRequests": 6
+      },
+      "recentLogs": [
+        {
+          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 10,
+          "mode": "offline",
+          "created_at": 1781714092075
+        },
+        {
+          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 43,
+          "mode": "chain",
+          "created_at": 1781714092055
+        },
+        {
+          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 11,
+          "mode": "offline",
+          "created_at": 1781714089778
+        },
+        {
+          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 8,
+          "mode": "offline",
+          "created_at": 1781714089748
+        },
+        {
+          "device_address": "0xcc61aBd7623B57fd64dc4714eCBB45d1E4450011",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 11,
+          "mode": "offline",
+          "created_at": 1781714089726
+        },
+        {
+          "device_address": "0x01955f2841CF18a77b4569a6578B48cab2a05e58",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 10,
+          "mode": "offline",
+          "created_at": 1781714089693
+        },
+        {
+          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 10,
+          "mode": "offline",
+          "created_at": 1781714089655
+        },
+        {
+          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "method": "verify",
+          "success": 1,
+          "response_time": 15,
+          "mode": "chain",
+          "created_at": 1781714089367
+        },
+        {
+          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "method": "verify",
+          "success": 1,
+          "response_time": 13,
+          "mode": "chain",
+          "created_at": 1781714089289
+        },
+        {
+          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "method": "verify",
+          "success": 1,
+          "response_time": 17,
+          "mode": "chain",
+          "created_at": 1781714089214
+        },
+        {
+          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "method": "verify",
+          "success": 1,
+          "response_time": 15,
+          "mode": "chain",
+          "created_at": 1781714089134
+        },
+        {
+          "device_address": "0xcc61aBd7623B57fd64dc4714eCBB45d1E4450011",
+          "method": "verify",
+          "success": 1,
+          "response_time": 14,
+          "mode": "chain",
+          "created_at": 1781714089056
+        },
+        {
+          "device_address": "0xcc61aBd7623B57fd64dc4714eCBB45d1E4450011",
+          "method": "verify",
+          "success": 1,
+          "response_time": 19,
+          "mode": "chain",
+          "created_at": 1781714088982
+        },
+        {
+          "device_address": "0x01955f2841CF18a77b4569a6578B48cab2a05e58",
+          "method": "verify",
+          "success": 1,
+          "response_time": 7,
+          "mode": "chain",
+          "created_at": 1781714088909
+        },
+        {
+          "device_address": "0x01955f2841CF18a77b4569a6578B48cab2a05e58",
+          "method": "verify",
+          "success": 1,
+          "response_time": 12,
+          "mode": "chain",
+          "created_at": 1781714088836
+        },
+        {
+          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "method": "verify",
+          "success": 1,
+          "response_time": 10,
+          "mode": "chain",
+          "created_at": 1781714088771
+        },
+        {
+          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "method": "verify",
+          "success": 1,
+          "response_time": 14,
+          "mode": "chain",
+          "created_at": 1781714088697
+        },
+        {
+          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 37,
+          "mode": "chain",
+          "created_at": 1781714088408
+        },
+        {
+          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 83,
+          "mode": "chain",
+          "created_at": 1781714088220
+        },
+        {
+          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 79,
+          "mode": "chain",
+          "created_at": 1781714088076
+        }
+      ]
+    },
+    "schemeA": {
+      "architecture": "hybrid-blockchain-mongodb",
+      "storage": "chain-mongodb",
+      "deviceStats": {
+        "total": 5,
+        "active": 5,
+        "revoked": 0,
+        "byType": {
+          "1": 5
+        }
+      },
+      "performance": {
+        "avgChainTime": 66,
+        "avgOfflineTime": 19
+      },
+      "memory": {
+        "pubkeyCached": 5,
+        "knownDevices": 5,
+        "totalRequests": 24,
+        "chainRequests": 18,
+        "offlineRequests": 6
+      },
+      "recentLogs": [
+        {
+          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 16,
+          "mode": "offline",
+          "created_at": 1781714092082
+        },
+        {
+          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 19,
+          "mode": "offline",
+          "created_at": 1781714089787
+        },
+        {
+          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 16,
+          "mode": "offline",
+          "created_at": 1781714089757
+        },
+        {
+          "device_address": "0xe0efe721f14eb8f47e2f0f8b64b29026a77a86e3",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 16,
+          "mode": "offline",
+          "created_at": 1781714089731
+        },
+        {
+          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 18,
+          "mode": "offline",
+          "created_at": 1781714089702
+        },
+        {
+          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 26,
+          "mode": "offline",
+          "created_at": 1781714089673
+        },
+        {
+          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 39,
+          "mode": "chain",
+          "created_at": 1781714088411
+        },
+        {
+          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 38,
+          "mode": "chain",
+          "created_at": 1781714088315
+        },
+        {
+          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 82,
+          "mode": "chain",
+          "created_at": 1781714088219
+        },
+        {
+          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 72,
+          "mode": "chain",
+          "created_at": 1781714088070
+        },
+        {
+          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 83,
+          "mode": "chain",
+          "created_at": 1781714087939
+        },
+        {
+          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 83,
+          "mode": "chain",
+          "created_at": 1781714087786
+        },
+        {
+          "device_address": "0xe0efe721f14eb8f47e2f0f8b64b29026a77a86e3",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 84,
+          "mode": "chain",
+          "created_at": 1781714087493
+        },
+        {
+          "device_address": "0xe0efe721f14eb8f47e2f0f8b64b29026a77a86e3",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 59,
+          "mode": "chain",
+          "created_at": 1781714087342
+        },
+        {
+          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 41,
+          "mode": "chain",
+          "created_at": 1781714087216
+        },
+        {
+          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 46,
+          "mode": "chain",
+          "created_at": 1781714087110
+        },
+        {
+          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 84,
+          "mode": "chain",
+          "created_at": 1781714086993
+        },
+        {
+          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 112,
+          "mode": "chain",
+          "created_at": 1781714086693
+        },
+        {
+          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 128,
+          "mode": "chain",
+          "created_at": 1781714086524
+        },
+        {
+          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "method": "register",
+          "success": 1,
+          "response_time": 38,
+          "mode": "chain",
+          "created_at": 1781714086175
+        }
+      ]
+    }
+  },
+  "performanceHistory": {
+    "scheme7": {
+      "history": [
+        {
+          "time": "2026-06-17T16",
+          "avg_chain_time": 46,
+          "avg_offline_time": 10,
+          "total_requests": 32,
+          "chain_requests": 26,
+          "offline_requests": 6
+        }
+      ]
+    },
+    "schemeA": {
+      "error": "路径 GET /api/auth/performance-history 不存在"
+    }
+  },
+  "totalDuration": 7075
+}

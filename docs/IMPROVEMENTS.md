@@ -77,13 +77,16 @@ messageHash = keccak256(abi.encodePacked(
 | 注销后离线仍可用 | 公钥 TTL 过期强制联网刷新 |
 | 边缘服务器被篡改 | 验签逻辑开源可审计；真相在链上 |
 
-## 性能权衡
+## 性能权衡（黑盒实测数据）
+
+> 以下数据由 `benchmark.js` 在本地 Hardhat 节点 + 5 设备 × 3 次认证场景下实测采集（2026-06-17）。
 
 去掉 MongoDB 后：
 
-- 每次在线写链认证：~200–500ms（Polygon RPC + 确认）
-- 离线认证：~5–15ms（纯本地验签）
-- 可用 `POST /verify` view 验签实现高频读路径（不写链）
+- 在线写链认证：avg **81ms**（scheme-7）vs 78ms（scheme-a），基本持平
+- 离线认证（ECDSA 验签）：avg **13ms**（scheme-7）vs 25ms（scheme-a MongoDB 凭证），快 48%
+- 可用 `POST /verify` view 验签实现高频读路径：avg **17ms**，不写链
+- 弱网离线认证（RTT 2000ms）：仅 **11ms**，完全不受网络延迟影响
 
 ## 合约变更摘要
 

@@ -58,7 +58,7 @@ async function authenticate(address, signature, nonce, timestamp, privateKey) {
     if (useNonce !== mongoNonce) throw new Error('Nonce 不匹配');
 
     // Simple on-chain authenticate (no nonce check in contract)
-    const chainResult = await blockchain.authenticateDevice(address);
+    const chainResult = await blockchain.authenticateDevice(address, privateKey);
     await mongodb.incrementNonce(address);
 
     const responseTime = Date.now() - startTime;

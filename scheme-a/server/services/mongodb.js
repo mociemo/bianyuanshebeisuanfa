@@ -5,15 +5,26 @@ const { Device, Credential, AuthLog } = require('../models/device');
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/scheme-a';
 
 let connected = false;
+let mongoServer = null;
 
 async function connectDB() {
     try {
-        await mongoose.connect(MONGODB_URI);
+        await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 3000 });
         connected = true;
         console.log('[方案A] MongoDB 连接成功:', MONGODB_URI);
     } catch (err) {
-        console.error('[方案A] MongoDB 连接失败:', err.message);
-        connected = false;
+        console.warn('[方案A] 外部 MongoDB 不可用, 启动内存 MongoDB...');
+        try {
+            const { MongoMemoryServer } = require('mongodb-memory-server');
+            mongoServer = await MongoMemoryServer.create();
+            const uri = mongoServer.getUri();
+            await mongoose.connect(uri);
+            connected = true;
+            console.log('[方案A] 内存 MongoDB 已启动:', uri);
+        } catch (err2) {
+            console.error('[方案A] 内存 MongoDB 也启动失败:', err2.message);
+            connected = false;
+        }
     }
 }
 
