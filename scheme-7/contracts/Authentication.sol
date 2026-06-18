@@ -240,7 +240,7 @@ contract Authentication {
         }
 
         bytes32 messageHash = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 deviceAddress,
                 nonce,
                 timestamp,
@@ -268,5 +268,23 @@ contract Authentication {
 
         address signer = ecrecover(ethSignedHash, v, r, s);
         return signer == deviceAddress;
+    }
+
+    /// @dev 调试用：返回链上计算的 messageHash（与 _verifySignature 一致）
+    function hashDebug(
+        address deviceAddress,
+        uint256 nonce,
+        uint256 timestamp,
+        string calldata challenge
+    ) external pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                deviceAddress,
+                nonce,
+                timestamp,
+                challenge,
+                AUTH_ACTION
+            )
+        );
     }
 }

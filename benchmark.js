@@ -210,6 +210,8 @@ async function offlineAuth(devs7, devsA) {
         }
 
         const ts = Math.floor(Date.now() / 1000);
+        const nonce7 = ch7.data.nonce ?? 0;
+        const nonceA = chA.data.nonce ?? 0;
         const [off7, offA] = await Promise.all([
             apiCall(PORT_7, '/api/auth/offline-auth', {
                 method: 'POST',
@@ -217,7 +219,7 @@ async function offlineAuth(devs7, devsA) {
                     address: devs7[d].address,
                     privateKey: devs7[d].privateKey,
                     challenge: ch7.data.challenge,
-                    nonce: 1,
+                    nonce: nonce7,
                     timestamp: ts,
                 },
             }),
@@ -227,7 +229,7 @@ async function offlineAuth(devs7, devsA) {
                     address: devsA[d].address,
                     privateKey: devsA[d].privateKey,
                     challenge: chA.data.challenge,
-                    nonce: 0,
+                    nonce: nonceA,
                     timestamp: ts,
                 },
             }),
@@ -272,14 +274,16 @@ async function weakNetworkTest(devs7, devsA) {
     ]);
 
     const ts = Math.floor(Date.now() / 1000);
+    const nonce7 = ch7.data?.nonce ?? 0;
+    const nonceA = chA.data?.nonce ?? 0;
     const [woff7, woffA] = await Promise.all([
         apiCall(PORT_7, '/api/auth/offline-auth', {
             method: 'POST',
-            body: { address: devs7[d].address, privateKey: devs7[d].privateKey, challenge: ch7.data?.challenge, nonce: 2, timestamp: ts },
+            body: { address: devs7[d].address, privateKey: devs7[d].privateKey, challenge: ch7.data?.challenge, nonce: nonce7, timestamp: ts },
         }),
         apiCall(PORT_A, '/api/auth/offline-auth', {
             method: 'POST',
-            body: { address: devsA[d].address, privateKey: devsA[d].privateKey, challenge: chA.data?.challenge, nonce: 0, timestamp: ts },
+            body: { address: devsA[d].address, privateKey: devsA[d].privateKey, challenge: chA.data?.challenge, nonce: nonceA, timestamp: ts },
         }),
     ]);
 

@@ -31,11 +31,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 logger.info('初始化区块链连接（链上为唯一持久化存储）...');
-blockchain.initBlockchain().then(() => {
-    logger.info('区块链连接成功');
-}).catch((err) => {
-    logger.warn('区块链连接失败，离线验签模式可用（需已预热公钥）', { error: err.message });
-});
+
+async function initServices() {
+    try {
+        await blockchain.initBlockchain();
+        logger.info('区块链连接成功');
+    } catch (err) {
+        logger.warn('区块链连接失败，离线验签模式可用（需已预热公钥）', { error: err.message });
+    }
+}
 
 app.use('/api/auth', authRoutes);
 app.use('/api/device', deviceRoutes);
@@ -58,11 +62,13 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 if (require.main === module) {
-    app.listen(PORT, () => {
-        logger.info('服务器启动成功', {
-            port: PORT,
-            url: `http://localhost:${PORT}`,
-            health: `http://localhost:${PORT}/health`
+    initServices().then(() => {
+        app.listen(PORT, () => {
+            logger.info('服务器启动成功', {
+                port: PORT,
+                url: `http://localhost:${PORT}`,
+                health: `http://localhost:${PORT}/health`
+            });
         });
     });
 }

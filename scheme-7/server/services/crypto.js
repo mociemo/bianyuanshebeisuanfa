@@ -4,13 +4,13 @@ const web3 = new Web3();
 const AUTH_ACTION = 'authenticate';
 
 function buildAuthMessageHash(address, nonce, timestamp, challenge = '') {
-    return web3.utils.soliditySha3(
-        { type: 'address', value: address },
-        { type: 'uint256', value: String(nonce) },
-        { type: 'uint256', value: String(timestamp) },
-        { type: 'string', value: challenge || '' },
-        { type: 'string', value: AUTH_ACTION }
+    // web3.utils.soliditySha3 在 v4.x 中的编码行为与 abi.encode 不完全一致。
+    // 必须使用 encodeParameters + keccak256 才能精确匹配 Solidity 的 keccak256(abi.encode(...))。
+    const encoded = web3.eth.abi.encodeParameters(
+        ['address', 'uint256', 'uint256', 'string', 'string'],
+        [address, String(nonce), String(timestamp), challenge || '', AUTH_ACTION]
     );
+    return web3.utils.keccak256(encoded);
 }
 
 function verifySignature(address, nonce, timestamp, challenge, signature) {
@@ -23,6 +23,11 @@ function verifySignature(address, nonce, timestamp, challenge, signature) {
 
 function signAuthMessage(privateKey, address, nonce, timestamp, challenge = '') {
     const messageHash = buildAuthMessageHash(address, nonce, timestamp, challenge);
+    console.log('[方案7] JS端签名参数:', {
+        address, nonce: String(nonce), timestamp: String(timestamp),
+        challenge: challenge || '', action: AUTH_ACTION,
+        messageHash
+    });
     return web3.eth.accounts.sign(messageHash, privateKey);
 }
 

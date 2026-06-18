@@ -140,7 +140,7 @@ async function main() {
     const startOffline = Date.now();
     const result = await api('POST', `${authApi}/offline-auth`, {
         address: account.address, privateKey: account.privateKey,
-        challenge: ch.challenge, nonce: 1, timestamp: Math.floor(Date.now() / 1000)
+        challenge: ch.challenge, nonce: ch.nonce, timestamp: Math.floor(Date.now() / 1000)
     });
     console.log(`  ${C.green}✔${C.reset} ${result.message} | ${result.responseTime}ms`);
     stats.push({ phase: '离线认证', ms: Date.now() - startOffline });

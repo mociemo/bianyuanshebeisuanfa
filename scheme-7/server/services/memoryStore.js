@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const PUBKEY_TTL = parseInt(process.env.PUBKEY_TTL) || 3600;
 const OFFLINE_WINDOW = parseInt(process.env.OFFLINE_TIMESTAMP_WINDOW) || 60;
 const CHALLENGE_TTL = parseInt(process.env.CHALLENGE_TTL) || 300;
@@ -61,7 +59,13 @@ function consumeChallenge(address, challenge) {
 
 function checkOfflineNonce(address, nonce) {
     const normalized = address.toLowerCase();
-    const last = offlineNonce.get(normalized) || 0;
+    // 首次离线认证：无条件接受（避免 undefined || 0 = 0 导致 nonce=0 被拒绝）
+    if (!offlineNonce.has(normalized)) {
+        offlineNonce.set(normalized, nonce);
+        return true;
+    }
+    // 后续认证：要求 nonce 严格递增，防止重放
+    const last = offlineNonce.get(normalized);
     if (nonce <= last) return false;
     offlineNonce.set(normalized, nonce);
     return true;

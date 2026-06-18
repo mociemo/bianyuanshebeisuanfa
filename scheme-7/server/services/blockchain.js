@@ -1,5 +1,4 @@
 const { Web3 } = require('web3');
-require('dotenv').config();
 
 const BLOCKCHAIN_URL = process.env.BLOCKCHAIN_URL || 'http://127.0.0.1:8545';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
@@ -86,13 +85,45 @@ async function initBlockchain() {
 
 function ensureContract() { if (!contract) throw new Error('合约未初始化'); }
 
+// 进程内账户级锁：同一账户的交易排队执行，避免自己打自己
+const accountLocks = {};
+
+function withAccountLock(account, fn) {
+    if (!accountLocks[account]) accountLocks[account] = Promise.resolve();
+    // .then(onFulfilled, onRejected): 无论上一笔成功或失败，都继续执行下一笔
+    // 同时正确传递本次调用的结果/错误给调用方
+    accountLocks[account] = accountLocks[account].then(() => fn(), () => fn());
+    return accountLocks[account];
+}
+
+// 轻量 nonce 重试：仅应对跨服务器碰撞（automine 下极少发生）
+async function withNonceRetry(fn, maxRetries = 3, baseDelay = 50) {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await fn();
+        } catch (err) {
+            const msg = (err?.message || String(err)).toLowerCase();
+            const isNonceErr = msg.includes('nonce too low') || msg.includes('nonce is too low');
+            if (i < maxRetries - 1 && isNonceErr) {
+                console.log(`[方案7 Nonce重试] 第${i + 1}次, 等待${baseDelay}ms`);
+                await new Promise(r => setTimeout(r, baseDelay));
+                continue;
+            }
+            throw err;
+        }
+    }
+}
+
 async function registerDevice(deviceAddress, publicKey, deviceType) {
     ensureContract();
     const accounts = await web3.eth.getAccounts();
-    const result = await contract.methods
-        .registerDevice(deviceAddress, publicKey, deviceType)
-        .send({ from: accounts[0], gas: 400000 });
-    return { transactionHash: result.transactionHash };
+    return withNonceRetry(() => withAccountLock(accounts[0], async () => {
+        const nonce = await web3.eth.getTransactionCount(accounts[0], 'pending');
+        const result = await contract.methods
+            .registerDevice(deviceAddress, publicKey, deviceType)
+            .send({ from: accounts[0], gas: 400000, nonce });
+        return { transactionHash: result.transactionHash };
+    }));
 }
 
 async function authenticateDevice(deviceAddress, nonce, timestamp, challenge, signature, privateKey) {
@@ -100,21 +131,44 @@ async function authenticateDevice(deviceAddress, nonce, timestamp, challenge, si
     const startTime = Date.now();
     const method = contract.methods.authenticate(deviceAddress, nonce, timestamp, challenge || '', signature);
 
-    let result;
-    if (privateKey) {
-        const gas = await method.estimateGas({ from: deviceAddress }).catch(() => 300000n);
-        const gasPrice = await web3.eth.getGasPrice();
-        const txData = {
-            from: deviceAddress, to: contract.options.address,
-            data: method.encodeABI(), gas: gas.toString(), gasPrice: gasPrice.toString()
-        };
-        const signed = await web3.eth.accounts.signTransaction(txData, privateKey);
-        result = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-    } else {
-        result = await method.send({ from: deviceAddress, gas: 300000 });
-    }
+    try {
+        let result;
+        if (privateKey) {
+            // gas 估算失败通常意味着合约会 revert，不再静默吞错
+            let gasEst;
+            try {
+                gasEst = await method.estimateGas({ from: deviceAddress });
+            } catch (gasErr) {
+                const reason = gasErr?.data?.data || gasErr?.innerError?.message || gasErr.message || String(gasErr);
+                console.error('[方案7] Gas估算失败 (合约将revert):', reason);
+                // 尝试用 call 获取具体的 revert 原因
+                try {
+                    await method.call({ from: deviceAddress });
+                } catch (callErr) {
+                    const revertReason = callErr?.data?.data || callErr?.innerError?.message || callErr.message || String(callErr);
+                    console.error('[方案7] call 模拟也失败:', revertReason);
+                }
+                throw new Error(`合约调用失败(签名/nonce/设备状态可能不匹配): ${reason}`);
+            }
+            // 估算值加 50% 缓冲，因为 ecrecover 实际执行 gas 可能高于估算
+            const gas = Math.floor(Number(gasEst) * 1.5);
+            const gasPrice = await web3.eth.getGasPrice();
+            const txData = {
+                from: deviceAddress, to: contract.options.address,
+                data: method.encodeABI(), gas: String(gas), gasPrice: gasPrice.toString()
+            };
+            const signed = await web3.eth.accounts.signTransaction(txData, privateKey);
+            result = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+        } else {
+            result = await method.send({ from: deviceAddress, gas: 500000 });
+        }
 
-    return { success: true, transactionHash: result.transactionHash, responseTime: Date.now() - startTime };
+        return { success: true, transactionHash: result.transactionHash, responseTime: Date.now() - startTime };
+    } catch (err) {
+        const errMsg = err?.data?.data || err?.innerError?.message || err.message || String(err);
+        console.error('[方案7] authenticateDevice 失败:', errMsg);
+        throw err;
+    }
 }
 
 async function verifyAuthOnChain(deviceAddress, nonce, timestamp, challenge, signature) {
@@ -167,7 +221,10 @@ async function getAccounts() { return web3.eth.getAccounts(); }
 async function createAccount() { return web3.eth.accounts.create(); }
 
 async function fundAccount(fromAddress, toAddress, amount = '1000000000000000000') {
-    return web3.eth.sendTransaction({ from: fromAddress, to: toAddress, value: amount, gas: 21000 });
+    return withNonceRetry(() => withAccountLock(fromAddress, async () => {
+        const nonce = await web3.eth.getTransactionCount(fromAddress, 'pending');
+        return web3.eth.sendTransaction({ from: fromAddress, to: toAddress, value: amount, gas: 21000, nonce });
+    }));
 }
 
 function isConnected() { return !!contract && !!web3; }

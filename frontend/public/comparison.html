@@ -206,8 +206,8 @@ async function runComparison() {
             ]);
             const ts = Math.floor(Date.now()/1000);
             const [rA, r7] = await Promise.all([
-                apiCall(A, '/offline-auth', {method:'POST', body:{address:devicesA[d].address, privateKey:devicesA[d].privateKey, challenge:chA.data.challenge, nonce:1, timestamp:ts}}),
-                apiCall(S7, '/offline-auth', {method:'POST', body:{address:devices7[d].address, privateKey:devices7[d].privateKey, challenge:ch7.data.challenge, nonce:1, timestamp:ts}})
+                apiCall(A, '/offline-auth', {method:'POST', body:{address:devicesA[d].address, privateKey:devicesA[d].privateKey, challenge:chA.data.challenge, nonce:chA.data.nonce ?? 0, timestamp:ts}}),
+                apiCall(S7, '/offline-auth', {method:'POST', body:{address:devices7[d].address, privateKey:devices7[d].privateKey, challenge:ch7.data.challenge, nonce:ch7.data.nonce ?? 0, timestamp:ts}})
             ]);
             if (rA.ok) offA_times.push(rA.time);
             if (r7.ok) off7_times.push(r7.time);
@@ -244,7 +244,6 @@ async function runComparison() {
 function renderBarChart(inst, canvasId, title, valA, val7) {
     if (inst) inst.destroy();
     const ctx = document.getElementById(canvasId).getContext('2d');
-    chartOnline = canvasId==='chartOnline' ? null : chartOnline;
     const newInst = new Chart(ctx, {
         type: 'bar',
         data: {

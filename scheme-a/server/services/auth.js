@@ -1,4 +1,3 @@
-require('dotenv').config();
 const blockchain = require('./blockchain');
 const mongodb = require('./mongodb');
 const crypto = require('./crypto');
@@ -78,12 +77,14 @@ async function requestOfflineChallenge(address, forceRefresh = false) {
     const device = await mongodb.findDevice(address);
     if (!device || device.status !== 1) throw new Error('设备不存在或已注销');
 
+    const deviceNonce = await mongodb.getNonce(address);
     const challenge = crypto.generateChallenge();
-    const credentialHash = crypto.buildAuthMessageHash(address, 0, Math.floor(Date.now() / 1000), challenge);
+    // 凭证哈希中不包含时间戳（时间戳窗口验证在 offlineAuth 中独立进行），确保 request 和 verify 端算出的 hash 一致
+    const credentialHash = crypto.buildAuthMessageHash(address, deviceNonce, 0, challenge);
     await mongodb.storeCredential(address, credentialHash);
 
     return {
-        success: true, address, challenge, pubkeyCached: true,
+        success: true, address, challenge, nonce: deviceNonce, pubkeyCached: true,
         offlineWindow: parseInt(process.env.OFFLINE_TIMESTAMP_WINDOW) || 60,
         responseTime: Date.now() - startTime
     };
@@ -94,8 +95,8 @@ async function offlineAuth(address, signature, nonce, timestamp, challenge, priv
     const device = await mongodb.findDevice(address);
     if (!device || device.status !== 1) throw new Error('设备不存在或已注销');
 
-    // Verify credential from MongoDB
-    const credentialHash = crypto.buildAuthMessageHash(address, nonce, timestamp, challenge);
+    // 凭证哈希中不含时间戳，与 requestOfflineChallenge 保持一致
+    const credentialHash = crypto.buildAuthMessageHash(address, nonce, 0, challenge);
     if (!(await mongodb.consumeCredential(address, credentialHash))) {
         throw new Error('无效或已使用的凭证');
     }

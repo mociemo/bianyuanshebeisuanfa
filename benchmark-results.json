@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-17T16:34:52.528Z",
+  "timestamp": "2026-06-18T02:56:36.111Z",
   "environment": {
     "os": "win32",
     "node": "v20.17.0",
@@ -10,82 +10,82 @@
   },
   "registration": {
     "scheme7_ms": {
-      "min": 32,
-      "max": 70,
-      "avg": 47,
-      "p50": 42,
-      "p90": 70,
-      "p99": 70,
+      "min": 18,
+      "max": 34,
+      "avg": 26,
+      "p50": 24,
+      "p90": 34,
+      "p99": 34,
       "n": 5
     },
     "schemeA_ms": {
-      "min": 36,
-      "max": 106,
-      "avg": 58,
-      "p50": 49,
-      "p90": 106,
-      "p99": 106,
+      "min": 20,
+      "max": 77,
+      "avg": 36,
+      "p50": 25,
+      "p90": 77,
+      "p99": 77,
       "n": 5
     }
   },
   "onlineAuth": {
     "scheme7_ms": {
-      "min": 39,
-      "max": 134,
-      "avg": 81,
-      "p50": 87,
-      "p90": 95,
-      "p99": 134,
-      "n": 10
+      "min": 42,
+      "max": 98,
+      "avg": 59,
+      "p50": 52,
+      "p90": 80,
+      "p99": 98,
+      "n": 15
     },
     "schemeA_ms": {
-      "min": 40,
-      "max": 136,
-      "avg": 78,
-      "p50": 86,
-      "p90": 120,
-      "p99": 136,
-      "n": 13
+      "min": 43,
+      "max": 87,
+      "avg": 58,
+      "p50": 54,
+      "p90": 80,
+      "p99": 87,
+      "n": 15
     },
-    "comparison": "scheme-7: 81ms avg vs scheme-a: 78ms avg"
+    "comparison": "scheme-7: 59ms avg vs scheme-a: 58ms avg"
   },
   "viewVerify": {
     "scheme7_ms": {
-      "min": 11,
-      "max": 20,
+      "min": 13,
+      "max": 22,
       "avg": 17,
       "p50": 17,
       "p90": 20,
-      "p99": 20,
+      "p99": 22,
       "n": 10
     }
   },
   "offlineAuth": {
     "scheme7_ms": {
-      "min": 11,
-      "max": 14,
-      "avg": 13,
-      "p50": 13,
-      "p90": 14,
-      "p99": 14,
+      "min": 12,
+      "max": 16,
+      "avg": 15,
+      "p50": 15,
+      "p90": 16,
+      "p99": 16,
       "n": 5
     },
     "schemeA_ms": {
-      "min": 19,
-      "max": 34,
-      "avg": 25,
-      "p50": 25,
-      "p90": 34,
-      "p99": 34,
+      "min": 23,
+      "max": 32,
+      "avg": 28,
+      "p50": 28,
+      "p90": 32,
+      "p99": 32,
       "n": 5
     },
-    "improvement": "48%"
+    "improvement": "46%"
   },
   "weakNetwork": {
-    "scheme7_online_ms": 2052,
-    "schemeA_online_ms": 2,
-    "scheme7_offline_ms": 11,
-    "schemeA_offline_ms": 21
+    "scheme7_online_ms": 2100,
+    "schemeA_online_ms": 4,
+    "scheme7_offline_ms": 13,
+    "schemeA_offline_ms": 24
   },
   "dashboard": {
     "scheme7": {
@@ -106,176 +106,176 @@
         }
       },
       "performance": {
-        "avgChainTime": 46,
-        "avgOfflineTime": 10
+        "avgChainTime": 40,
+        "avgOfflineTime": 12
       },
       "memory": {
         "pubkeyCached": 5,
         "knownDevices": 5,
-        "totalRequests": 32,
-        "chainRequests": 26,
+        "totalRequests": 38,
+        "chainRequests": 32,
         "offlineRequests": 6
       },
       "recentLogs": [
         {
-          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
-          "method": "offline_auth",
-          "success": 1,
-          "response_time": 10,
-          "mode": "offline",
-          "created_at": 1781714092075
-        },
-        {
-          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "device_address": "0x26b4122F0Ad2708b57dd0B096b0cBB11450B7BC6",
           "method": "authenticate",
           "success": 1,
-          "response_time": 43,
+          "response_time": 77,
           "mode": "chain",
-          "created_at": 1781714092055
+          "created_at": 1781751395936
         },
         {
-          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "device_address": "0x26b4122F0Ad2708b57dd0B096b0cBB11450B7BC6",
           "method": "offline_auth",
           "success": 1,
-          "response_time": 11,
+          "response_time": 12,
           "mode": "offline",
-          "created_at": 1781714089778
+          "created_at": 1781751395637
         },
         {
-          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "device_address": "0x26b4122F0Ad2708b57dd0B096b0cBB11450B7BC6",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 84,
+          "mode": "chain",
+          "created_at": 1781751395614
+        },
+        {
+          "device_address": "0x2429c419cAaf3806044147903BD480E4D5c5B21c",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 13,
+          "mode": "offline",
+          "created_at": 1781751393296
+        },
+        {
+          "device_address": "0x370614feE9de10C1cF97f71E3B8CB174df6E3242",
           "method": "offline_auth",
           "success": 1,
           "response_time": 8,
           "mode": "offline",
-          "created_at": 1781714089748
+          "created_at": 1781751393259
         },
         {
-          "device_address": "0xcc61aBd7623B57fd64dc4714eCBB45d1E4450011",
+          "device_address": "0xCd84514ed28C0ed1222863Bb99129C236158CD69",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 13,
+          "mode": "offline",
+          "created_at": 1781751393220
+        },
+        {
+          "device_address": "0xcD0F3F0F63899D7d42800863db1726718dff1508",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 13,
+          "mode": "offline",
+          "created_at": 1781751393177
+        },
+        {
+          "device_address": "0x26b4122F0Ad2708b57dd0B096b0cBB11450B7BC6",
           "method": "offline_auth",
           "success": 1,
           "response_time": 11,
           "mode": "offline",
-          "created_at": 1781714089726
+          "created_at": 1781751393137
         },
         {
-          "device_address": "0x01955f2841CF18a77b4569a6578B48cab2a05e58",
-          "method": "offline_auth",
+          "device_address": "0x2429c419cAaf3806044147903BD480E4D5c5B21c",
+          "method": "verify",
           "success": 1,
-          "response_time": 10,
-          "mode": "offline",
-          "created_at": 1781714089693
+          "response_time": 16,
+          "mode": "chain",
+          "created_at": 1781751392834
         },
         {
-          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
-          "method": "offline_auth",
-          "success": 1,
-          "response_time": 10,
-          "mode": "offline",
-          "created_at": 1781714089655
-        },
-        {
-          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
+          "device_address": "0x2429c419cAaf3806044147903BD480E4D5c5B21c",
           "method": "verify",
           "success": 1,
           "response_time": 15,
           "mode": "chain",
-          "created_at": 1781714089367
+          "created_at": 1781751392755
         },
         {
-          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
-          "method": "verify",
-          "success": 1,
-          "response_time": 13,
-          "mode": "chain",
-          "created_at": 1781714089289
-        },
-        {
-          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
-          "method": "verify",
-          "success": 1,
-          "response_time": 17,
-          "mode": "chain",
-          "created_at": 1781714089214
-        },
-        {
-          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "device_address": "0x370614feE9de10C1cF97f71E3B8CB174df6E3242",
           "method": "verify",
           "success": 1,
           "response_time": 15,
           "mode": "chain",
-          "created_at": 1781714089134
+          "created_at": 1781751392678
         },
         {
-          "device_address": "0xcc61aBd7623B57fd64dc4714eCBB45d1E4450011",
-          "method": "verify",
-          "success": 1,
-          "response_time": 14,
-          "mode": "chain",
-          "created_at": 1781714089056
-        },
-        {
-          "device_address": "0xcc61aBd7623B57fd64dc4714eCBB45d1E4450011",
-          "method": "verify",
-          "success": 1,
-          "response_time": 19,
-          "mode": "chain",
-          "created_at": 1781714088982
-        },
-        {
-          "device_address": "0x01955f2841CF18a77b4569a6578B48cab2a05e58",
-          "method": "verify",
-          "success": 1,
-          "response_time": 7,
-          "mode": "chain",
-          "created_at": 1781714088909
-        },
-        {
-          "device_address": "0x01955f2841CF18a77b4569a6578B48cab2a05e58",
+          "device_address": "0x370614feE9de10C1cF97f71E3B8CB174df6E3242",
           "method": "verify",
           "success": 1,
           "response_time": 12,
           "mode": "chain",
-          "created_at": 1781714088836
+          "created_at": 1781751392595
         },
         {
-          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "device_address": "0xCd84514ed28C0ed1222863Bb99129C236158CD69",
           "method": "verify",
           "success": 1,
-          "response_time": 10,
+          "response_time": 13,
           "mode": "chain",
-          "created_at": 1781714088771
+          "created_at": 1781751392520
         },
         {
-          "device_address": "0xA16dD713301407eB65720A165929F3b69fEdd7ee",
+          "device_address": "0xCd84514ed28C0ed1222863Bb99129C236158CD69",
           "method": "verify",
           "success": 1,
           "response_time": 14,
           "mode": "chain",
-          "created_at": 1781714088697
+          "created_at": 1781751392443
         },
         {
-          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
-          "method": "authenticate",
+          "device_address": "0xcD0F3F0F63899D7d42800863db1726718dff1508",
+          "method": "verify",
           "success": 1,
-          "response_time": 37,
+          "response_time": 15,
           "mode": "chain",
-          "created_at": 1781714088408
+          "created_at": 1781751392366
         },
         {
-          "device_address": "0xa4a4D93A5568F9604941034882f3Aa327062e06a",
-          "method": "authenticate",
+          "device_address": "0xcD0F3F0F63899D7d42800863db1726718dff1508",
+          "method": "verify",
           "success": 1,
-          "response_time": 83,
+          "response_time": 10,
           "mode": "chain",
-          "created_at": 1781714088220
+          "created_at": 1781751392283
         },
         {
-          "device_address": "0x1136F4cAd0bb6AC2b2d3783cf6A3e6786F613F9b",
+          "device_address": "0x26b4122F0Ad2708b57dd0B096b0cBB11450B7BC6",
+          "method": "verify",
+          "success": 1,
+          "response_time": 14,
+          "mode": "chain",
+          "created_at": 1781751392208
+        },
+        {
+          "device_address": "0x26b4122F0Ad2708b57dd0B096b0cBB11450B7BC6",
+          "method": "verify",
+          "success": 1,
+          "response_time": 17,
+          "mode": "chain",
+          "created_at": 1781751392135
+        },
+        {
+          "device_address": "0x2429c419cAaf3806044147903BD480E4D5c5B21c",
           "method": "authenticate",
           "success": 1,
-          "response_time": 79,
+          "response_time": 95,
           "mode": "chain",
-          "created_at": 1781714088076
+          "created_at": 1781751391855
+        },
+        {
+          "device_address": "0x2429c419cAaf3806044147903BD480E4D5c5B21c",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 47,
+          "mode": "chain",
+          "created_at": 1781751391699
         }
       ]
     },
@@ -291,176 +291,176 @@
         }
       },
       "performance": {
-        "avgChainTime": 66,
-        "avgOfflineTime": 19
+        "avgChainTime": 49,
+        "avgOfflineTime": 20
       },
       "memory": {
         "pubkeyCached": 5,
         "knownDevices": 5,
-        "totalRequests": 24,
-        "chainRequests": 18,
+        "totalRequests": 26,
+        "chainRequests": 20,
         "offlineRequests": 6
       },
       "recentLogs": [
         {
-          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
-          "method": "offline_auth",
-          "success": 1,
-          "response_time": 16,
-          "mode": "offline",
-          "created_at": 1781714092082
-        },
-        {
-          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
-          "method": "offline_auth",
-          "success": 1,
-          "response_time": 19,
-          "mode": "offline",
-          "created_at": 1781714089787
-        },
-        {
-          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
-          "method": "offline_auth",
-          "success": 1,
-          "response_time": 16,
-          "mode": "offline",
-          "created_at": 1781714089757
-        },
-        {
-          "device_address": "0xe0efe721f14eb8f47e2f0f8b64b29026a77a86e3",
-          "method": "offline_auth",
-          "success": 1,
-          "response_time": 16,
-          "mode": "offline",
-          "created_at": 1781714089731
-        },
-        {
-          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "device_address": "0x12232c2d30faf7222d53af8e08e69a0dfe19b545",
           "method": "offline_auth",
           "success": 1,
           "response_time": 18,
           "mode": "offline",
-          "created_at": 1781714089702
+          "created_at": 1781751395645
         },
         {
-          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "device_address": "0xb449f9cbc0e25de5fd15f0e5ab9c42378e836648",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 19,
+          "mode": "offline",
+          "created_at": 1781751393303
+        },
+        {
+          "device_address": "0x3f428b919bd9a66e0a07287126038b9f3e39253c",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 18,
+          "mode": "offline",
+          "created_at": 1781751393269
+        },
+        {
+          "device_address": "0x583ea606ba861f99c351aebc494bd4641febbda6",
           "method": "offline_auth",
           "success": 1,
           "response_time": 26,
           "mode": "offline",
-          "created_at": 1781714089673
+          "created_at": 1781751393234
         },
         {
-          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "device_address": "0xab931d56b979d00a8d6f320a6c62affc4ca5b29e",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 22,
+          "mode": "offline",
+          "created_at": 1781751393187
+        },
+        {
+          "device_address": "0x12232c2d30faf7222d53af8e08e69a0dfe19b545",
+          "method": "offline_auth",
+          "success": 1,
+          "response_time": 19,
+          "mode": "offline",
+          "created_at": 1781751393147
+        },
+        {
+          "device_address": "0xb449f9cbc0e25de5fd15f0e5ab9c42378e836648",
           "method": "authenticate",
           "success": 1,
-          "response_time": 39,
+          "response_time": 81,
           "mode": "chain",
-          "created_at": 1781714088411
+          "created_at": 1781751391841
         },
         {
-          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "device_address": "0xb449f9cbc0e25de5fd15f0e5ab9c42378e836648",
           "method": "authenticate",
           "success": 1,
-          "response_time": 38,
+          "response_time": 48,
           "mode": "chain",
-          "created_at": 1781714088315
+          "created_at": 1781751391700
         },
         {
-          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
+          "device_address": "0xb449f9cbc0e25de5fd15f0e5ab9c42378e836648",
           "method": "authenticate",
           "success": 1,
-          "response_time": 82,
+          "response_time": 50,
           "mode": "chain",
-          "created_at": 1781714088219
+          "created_at": 1781751391592
         },
         {
-          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "device_address": "0x3f428b919bd9a66e0a07287126038b9f3e39253c",
           "method": "authenticate",
           "success": 1,
-          "response_time": 72,
+          "response_time": 53,
           "mode": "chain",
-          "created_at": 1781714088070
+          "created_at": 1781751391486
         },
         {
-          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "device_address": "0x3f428b919bd9a66e0a07287126038b9f3e39253c",
           "method": "authenticate",
           "success": 1,
-          "response_time": 83,
+          "response_time": 40,
           "mode": "chain",
-          "created_at": 1781714087939
+          "created_at": 1781751391366
         },
         {
-          "device_address": "0xd2c5f1b66be5dbbc221180cc73f24648b49a0ded",
+          "device_address": "0x3f428b919bd9a66e0a07287126038b9f3e39253c",
           "method": "authenticate",
           "success": 1,
-          "response_time": 83,
+          "response_time": 56,
           "mode": "chain",
-          "created_at": 1781714087786
+          "created_at": 1781751391257
         },
         {
-          "device_address": "0xe0efe721f14eb8f47e2f0f8b64b29026a77a86e3",
-          "method": "authenticate",
-          "success": 1,
-          "response_time": 84,
-          "mode": "chain",
-          "created_at": 1781714087493
-        },
-        {
-          "device_address": "0xe0efe721f14eb8f47e2f0f8b64b29026a77a86e3",
-          "method": "authenticate",
-          "success": 1,
-          "response_time": 59,
-          "mode": "chain",
-          "created_at": 1781714087342
-        },
-        {
-          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "device_address": "0x583ea606ba861f99c351aebc494bd4641febbda6",
           "method": "authenticate",
           "success": 1,
           "response_time": 41,
           "mode": "chain",
-          "created_at": 1781714087216
+          "created_at": 1781751391134
         },
         {
-          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "device_address": "0x583ea606ba861f99c351aebc494bd4641febbda6",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 39,
+          "mode": "chain",
+          "created_at": 1781751391024
+        },
+        {
+          "device_address": "0x583ea606ba861f99c351aebc494bd4641febbda6",
           "method": "authenticate",
           "success": 1,
           "response_time": 46,
           "mode": "chain",
-          "created_at": 1781714087110
+          "created_at": 1781751390921
         },
         {
-          "device_address": "0x71bb2638aaf043bf094e7505daeb629b0b5ddcdc",
+          "device_address": "0xab931d56b979d00a8d6f320a6c62affc4ca5b29e",
           "method": "authenticate",
           "success": 1,
-          "response_time": 84,
+          "response_time": 49,
           "mode": "chain",
-          "created_at": 1781714086993
+          "created_at": 1781751390816
         },
         {
-          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "device_address": "0xab931d56b979d00a8d6f320a6c62affc4ca5b29e",
           "method": "authenticate",
           "success": 1,
-          "response_time": 112,
+          "response_time": 75,
           "mode": "chain",
-          "created_at": 1781714086693
+          "created_at": 1781751390704
         },
         {
-          "device_address": "0xd23c0d3daf766c7801c9069b683fef1396609ff8",
+          "device_address": "0xab931d56b979d00a8d6f320a6c62affc4ca5b29e",
           "method": "authenticate",
           "success": 1,
-          "response_time": 128,
+          "response_time": 47,
           "mode": "chain",
-          "created_at": 1781714086524
+          "created_at": 1781751390565
         },
         {
-          "device_address": "0xc69aca2359e60f4b3ca99ca93d8ae22d3b4e36bd",
-          "method": "register",
+          "device_address": "0x12232c2d30faf7222d53af8e08e69a0dfe19b545",
+          "method": "authenticate",
           "success": 1,
-          "response_time": 38,
+          "response_time": 72,
           "mode": "chain",
-          "created_at": 1781714086175
+          "created_at": 1781751390448
+        },
+        {
+          "device_address": "0x12232c2d30faf7222d53af8e08e69a0dfe19b545",
+          "method": "authenticate",
+          "success": 1,
+          "response_time": 47,
+          "mode": "chain",
+          "created_at": 1781751390316
         }
       ]
     }
@@ -469,11 +469,11 @@
     "scheme7": {
       "history": [
         {
-          "time": "2026-06-17T16",
-          "avg_chain_time": 46,
-          "avg_offline_time": 10,
-          "total_requests": 32,
-          "chain_requests": 26,
+          "time": "2026-06-18T02",
+          "avg_chain_time": 40,
+          "avg_offline_time": 12,
+          "total_requests": 38,
+          "chain_requests": 32,
           "offline_requests": 6
         }
       ]
@@ -482,5 +482,5 @@
       "error": "路径 GET /api/auth/performance-history 不存在"
     }
   },
-  "totalDuration": 7075
+  "totalDuration": 7095
 }

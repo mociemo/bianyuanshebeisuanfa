@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const blockchain = require('./blockchain');
 const memoryStore = require('./memoryStore');
 const crypto = require('./crypto');
@@ -93,11 +91,39 @@ async function getAuthNonce(address) {
     return { address, nonce, timestamp: Math.floor(Date.now() / 1000) };
 }
 
+// 辅助：给设备注资（用于 gas）并注册到链上
+async function fundAndRegister(address, publicKey, deviceType) {
+    const accounts = await blockchain.getAccounts();
+    const balance = await blockchain.getWeb3().eth.getBalance(address);
+    // 设备余额不足时从 accounts[0] 转 1 ETH
+    if (BigInt(balance) < BigInt('100000000000000000')) {
+        await blockchain.fundAccount(accounts[0], address, '1000000000000000000');
+    }
+    return register(address, publicKey, deviceType);
+}
+
 async function authenticate(address, signature, nonce, timestamp, privateKey) {
     const startTime = Date.now();
 
     if (!blockchain.isConnected()) {
         throw new Error('区块链未连接，请使用离线认证');
+    }
+
+    // 自动恢复：链上无此设备时尽可能自动注册并注资，对前端透明
+    let isRegistered = await blockchain.isDeviceValid(address).catch(() => false);
+    if (!isRegistered) {
+        const cached = memoryStore.getCachedPublicKey(address);
+        if (cached) {
+            // 场景A：Hardhat 重启，内存缓存还在 → 用缓存的设备类型重新注册
+            console.log(`[方案7] 设备 ${address.slice(0, 10)}... 链上未注册(可能 Hardhat 重启)，自动重新注册并注资`);
+            await fundAndRegister(address, cached.publicKey || address, cached.deviceType || 1);
+        } else if (privateKey) {
+            // 场景B：全新设备，前端可能跳过了注册步骤 → 直接帮注册+注资
+            console.log(`[方案7] 设备 ${address.slice(0, 10)}... 自动首次注册并注资(类型默认 DoorLock)`);
+            await fundAndRegister(address, address, 1);
+        } else {
+            throw new Error('设备未在链上注册，请先注册设备或提供私钥');
+        }
     }
 
     let sig = signature;
@@ -115,6 +141,7 @@ async function authenticate(address, signature, nonce, timestamp, privateKey) {
         throw new Error('缺少签名或私钥');
     }
 
+    // useNonce 和 useTimestamp 已在 privateKey 分支中获取，此处仅补默认值
     useNonce = useNonce ?? (await blockchain.getNonce(address));
     useTimestamp = useTimestamp ?? Math.floor(Date.now() / 1000);
 
@@ -196,6 +223,7 @@ async function requestOfflineChallenge(address, forceRefresh = false) {
         success: true,
         address,
         challenge,
+        nonce: cached.chainNonce ?? cached.nonce ?? 0,
         pubkeyCached: true,
         pubkeyTtl: memoryStore.getPubkeyTtl(),
         offlineWindow: memoryStore.getOfflineWindow(),

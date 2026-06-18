@@ -79,14 +79,17 @@ messageHash = keccak256(abi.encodePacked(
 
 ## 性能权衡（黑盒实测数据）
 
-> 以下数据由 `benchmark.js` 在本地 Hardhat 节点 + 5 设备 × 3 次认证场景下实测采集（2026-06-17）。
+> 以下数据由 `benchmark.js` 在本地 Hardhat 节点 + 5 设备 × 3 次认证场景下实测采集（2026-06-18 10:56 UTC+8）。
 
 去掉 MongoDB 后：
 
-- 在线写链认证：avg **81ms**（scheme-7）vs 78ms（scheme-a），基本持平
-- 离线认证（ECDSA 验签）：avg **13ms**（scheme-7）vs 25ms（scheme-a MongoDB 凭证），快 48%
+- 设备注册：avg **26ms**（scheme-7）vs 36ms（scheme-a），快 28%
+- 在线写链认证：avg **59ms**（scheme-7）vs 58ms（scheme-a），基本持平（差异在噪音范围内）
+- 离线认证（ECDSA 验签）：avg **15ms**（scheme-7）vs 28ms（scheme-a MongoDB 凭证），快 46%
 - 可用 `POST /verify` view 验签实现高频读路径：avg **17ms**，不写链
-- 弱网离线认证（RTT 2000ms）：仅 **11ms**，完全不受网络延迟影响
+- 弱网离线认证（RTT 2000ms）：仅 **13ms**，完全不受网络延迟影响（方案 A 为 24ms）
+
+> 📝 原始数据文件: `benchmark-results.json` | 数据采集脚本: `benchmark.js`
 
 ## 合约变更摘要
 

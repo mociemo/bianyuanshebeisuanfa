@@ -126,14 +126,18 @@
             <div class="panel scheme-a">
                 <div class="panel-title">📦 方案A — MongoDB nonce + 链上记录<span class="arch">port:3001</span></div>
                 <div id="auth-a-msg" class="result-box"></div>
-                <div class="form-group"><label class="form-label">设备地址</label><input class="form-input" id="auth-addr" placeholder="0x..."></div>
-                <div class="form-group"><label class="form-label">设备私钥</label><input class="form-input" id="auth-pk" placeholder="0x..."></div>
-                <button class="btn btn-primary" onclick="compareAuth()">双方案同时认证</button>
+                <div class="form-group"><label class="form-label">方案A 设备地址</label><input class="form-input" id="auth-addr-a" placeholder="注册后自动填入..."></div>
+                <div class="form-group"><label class="form-label">方案A 设备私钥</label><input class="form-input" id="auth-pk-a" placeholder="注册后自动填入..."></div>
             </div>
             <div class="panel scheme-7">
                 <div class="panel-title">🚀 方案7 — 链上nonce + 签名验签<span class="arch">port:3000</span></div>
                 <div id="auth-7-msg" class="result-box"></div>
+                <div class="form-group"><label class="form-label">方案7 设备地址</label><input class="form-input" id="auth-addr-7" placeholder="注册后自动填入..."></div>
+                <div class="form-group"><label class="form-label">方案7 设备私钥</label><input class="form-input" id="auth-pk-7" placeholder="注册后自动填入..."></div>
             </div>
+        </div>
+        <div style="margin-top:12px; text-align:center;">
+            <button class="btn btn-primary" onclick="compareAuth()">双方案同时认证</button>
         </div>
         <div id="auth-compare" style="display:none; margin-top:12px;">
             <div class="latency-bar"><span style="font-size:12px;min-width:80px;color:var(--text2)">方案A:</span><div class="bar a" id="auth-bar-a">0ms</div></div>
@@ -229,12 +233,14 @@ async function compareRegister() {
 
     if (rA.ok && rA.data.address) { lastDeviceA = rA.data;
         document.getElementById('reg-a-result').innerHTML = `<span style="color:#10b981">✔ 成功</span> 地址: ${rA.data.address.substring(0,14)}...<br>类型: ${rA.data.deviceType} | 耗时: ${rA.time}ms`;
-        document.getElementById('auth-addr').value = rA.data.address;
-        document.getElementById('auth-pk').value = rA.data.privateKey || '';
+        document.getElementById('auth-addr-a').value = rA.data.address;
+        document.getElementById('auth-pk-a').value = rA.data.privateKey || '';
     } else { document.getElementById('reg-a-result').innerHTML = `<span style="color:#ef4444">✘</span> ${rA.data.error||'失败'}`; }
 
     if (r7.ok && r7.data.address) { lastDevice7 = r7.data;
         document.getElementById('reg-7-result').innerHTML = `<span style="color:#10b981">✔ 成功</span> 地址: ${r7.data.address.substring(0,14)}...<br>类型: ${r7.data.deviceType} | 耗时: ${r7.time}ms`;
+        document.getElementById('auth-addr-7').value = r7.data.address;
+        document.getElementById('auth-pk-7').value = r7.data.privateKey || '';
     } else { document.getElementById('reg-7-result').innerHTML = `<span style="color:#ef4444">✘</span> ${r7.data.error||'失败'}`; }
 
     if (rA.ok && r7.ok) showBar('reg', rA.time, r7.time);
@@ -243,14 +249,16 @@ async function compareRegister() {
 }
 
 async function compareAuth() {
-    const addr = document.getElementById('auth-addr').value;
-    const pk = document.getElementById('auth-pk').value;
-    if (!addr) { alert('请先注册设备获取地址'); return; }
+    const addrA = document.getElementById('auth-addr-a').value;
+    const pkA = document.getElementById('auth-pk-a').value;
+    const addr7 = document.getElementById('auth-addr-7').value;
+    const pk7 = document.getElementById('auth-pk-7').value;
 
-    const body = { address: addr, privateKey: pk };
+    if (!addrA && !addr7) { alert('请先在"设备注册"标签页注册设备，会自动填入地址'); return; }
+
     const [rA, r7] = await Promise.all([
-        apiCall(A, '/authenticate', {method:'POST', body}),
-        apiCall(S7, '/authenticate', {method:'POST', body})
+        addrA ? apiCall(A, '/authenticate', {method:'POST', body:{address: addrA, privateKey: pkA}}) : Promise.resolve({ok:false, data:{error:'未注册方案A设备'}, time:0}),
+        addr7 ? apiCall(S7, '/authenticate', {method:'POST', body:{address: addr7, privateKey: pk7}}) : Promise.resolve({ok:false, data:{error:'未注册方案7设备'}, time:0})
     ]);
 
     document.getElementById('auth-a-msg').className = 'result-box show ' + (rA.ok?'success':'error');
@@ -263,9 +271,17 @@ async function compareAuth() {
 }
 
 async function compareOffline() {
+    const btn = document.querySelector('#offline .btn');
+    btn.disabled = true; btn.textContent = '离线认证中...';
     // Create device first
     const [devA, dev7] = await Promise.all([registerDevice(A), registerDevice(S7)]);
-    if (!devA.ok || !dev7.ok) { alert('创建设备失败，请确保两个服务器都在运行'); return; }
+    if (!devA.ok || !dev7.ok) {
+        const errMsg = [
+            devA.ok ? '方案A(3001): ✅ 成功' : '方案A(3001): ❌ ' + (devA.data?.error || '网络不可达'),
+            dev7.ok ? '方案7(3000): ✅ 成功' : '方案7(3000): ❌ ' + (dev7.data?.error || '网络不可达')
+        ].join('\n');
+        alert('创建设备失败:\n\n' + errMsg + '\n\n请检查:\n1. Hardhat节点是否在8545端口运行\n2. MongoDB是否在27017端口运行(方案A需要)\n3. 两个Node服务器(3000/3001)是否已启动');
+        btn.disabled = false; btn.textContent = '双方案离线认证演示'; return; }
 
     // Get challenges
     const [chA, ch7] = await Promise.all([
@@ -276,8 +292,8 @@ async function compareOffline() {
     // Offline auth
     const ts = Math.floor(Date.now()/1000);
     const [offA, off7] = await Promise.all([
-        apiCall(A, '/offline-auth', {method:'POST', body:{address:devA.data.address, privateKey:devA.data.privateKey, challenge:chA.data.challenge, nonce:1, timestamp:ts}}),
-        apiCall(S7, '/offline-auth', {method:'POST', body:{address:dev7.data.address, privateKey:dev7.data.privateKey, challenge:ch7.data.challenge, nonce:1, timestamp:ts}})
+        apiCall(A, '/offline-auth', {method:'POST', body:{address:devA.data.address, privateKey:devA.data.privateKey, challenge:chA.data.challenge, nonce:chA.data.nonce ?? 0, timestamp:ts}}),
+        apiCall(S7, '/offline-auth', {method:'POST', body:{address:dev7.data.address, privateKey:dev7.data.privateKey, challenge:ch7.data.challenge, nonce:ch7.data.nonce ?? 0, timestamp:ts}})
     ]);
 
     document.getElementById('off-a-msg').className = 'result-box show ' + (offA.ok?'success':'error');
@@ -287,6 +303,7 @@ async function compareOffline() {
 
     if (offA.ok && off7.ok) showBar('off', offA.time, off7.time);
     addLog('离线认证', offA.time+'ms'+(offA.ok?'✔':'✘'), off7.time+'ms'+(off7.ok?'✔':'✘'));
+    btn.disabled = false; btn.textContent = '双方案离线认证演示';
 }
 
 // Tab switching

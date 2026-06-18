@@ -28,14 +28,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 async function init() {
     console.log('[方案A] 初始化 MongoDB 连接...');
     await mongodb.connectDB();
+    console.log('[方案A] MongoDB 连接成功');
     console.log('[方案A] 初始化区块链连接...');
-    blockchain.initBlockchain().then(() => {
+    try {
+        await blockchain.initBlockchain();
         console.log('[方案A] 区块链连接成功');
-    }).catch((err) => {
+    } catch (err) {
         console.warn('[方案A] 区块链连接失败:', err.message);
-    });
+    }
 }
-init();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/device', deviceRoutes);
@@ -58,8 +59,10 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`[方案A] 服务器启动成功 | http://localhost:${PORT}/health`);
+    init().then(() => {
+        app.listen(PORT, () => {
+            console.log(`[方案A] 服务器启动成功 | http://localhost:${PORT}/health`);
+        });
     });
 }
 

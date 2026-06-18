@@ -48,7 +48,7 @@
   "success": true,
   "address": "0x...",
   "transactionHash": "0xabc...",
-  "responseTime": 47
+  "responseTime": 26
 }
 ```
 
@@ -110,7 +110,7 @@
   "mode": "online",
   "nonce": 0,
   "transactionHash": "0x...",
-  "responseTime": 81,
+  "responseTime": 59,
   "message": "在线认证成功（链上 nonce 已递增）"
 }
 ```
@@ -195,7 +195,7 @@
   "architecture": "fully-decentralized",
   "storage": "chain-only",
   "deviceStats": { "total": 5, "active": 5, "revoked": 0, "byType": {} },
-  "performance": { "avgChainTime": 46, "avgOfflineTime": 10, "avgViewVerifyTime": 17 },
+  "performance": { "avgChainTime": 40, "avgOfflineTime": 12, "avgViewVerifyTime": 17 },
   "memory": { "pubkeyCached": 5, "chainRequests": 26, "offlineRequests": 6, "viewVerifyRequests": 10 },
   "recentLogs": []
 }
